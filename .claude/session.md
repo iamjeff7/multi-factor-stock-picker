@@ -1,4 +1,4 @@
-**Current Task:** Data layer — complete, awaiting commit
+**Current Task:** Data layer — committed (304840c)
 Status: Complete
 
 ## What's Done
@@ -15,7 +15,7 @@ Status: Complete
 - `pytest tests/` — 14 passed
 
 ## Next Steps
-1. Commit data layer changes (when requested)
+1. Push to origin (when requested)
 2. Factor pipeline (scoring, combination, IC, performance) — not started
 
 ## Context

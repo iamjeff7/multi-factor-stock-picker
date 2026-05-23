@@ -30,3 +30,41 @@
   - Task 3: Reorganize src/ — schemas, data/universe, entry_signals, exit_signals
   - Task 4: Add factors subdirs, backtest stubs, evaluation, reporting
   - Task 5: Update pyproject.toml, tests, README, run verification
+
+## Session 2 — 2026-05-23 22:04:26
+
+- Goal: Implement the data and universe layer per v2_data and v2_universe specifications — loading, validation, PIT access, and universe construction (no signals or backtesting)
+
+- What I Built:
+  - `src/data/loaders/` — DatasetManifest, ParquetLoader, LoadedDataset
+  - `src/data/store/in_memory_store.py` — InMemoryDataStore with point-in-time enforcement
+  - `src/data/validation/` — price, volume, fundamentals, corporate action validators; DatasetValidator orchestrator
+  - `src/data/corporate_actions/` — CorporateActionAdjuster and PIT filter for splits/dividends
+  - `src/data/universe/` — DefaultUniverseBuilder, ADDV liquidity, filters, DefaultUniverseValidator
+  - `scripts/download_mag7_data.py` — yfinance download for Mag 7 tickers to Parquet + manifest
+  - `scripts/generate_edge_case_data.py` — synthetic delist/illiquid/IPO fixtures
+  - `tests/fixtures/data/mag7/` and `edge_cases/` — committed Parquet fixtures for CI
+  - `tests/data/` — 11 tests covering PIT access, validation, adjuster, universe, Mag 7 integration
+  - `pyproject.toml`, `README.md` — pyarrow/pandas/yfinance deps and usage docs
+
+- Decisions Made:
+  - PIT enforcement at InMemoryDataStore — rejects future-dated queries and filters prices, fundamentals, and corporate actions by as-of date
+  - Metadata uses two as_of_date rows per ticker (first and last trade date) — historical eval dates resolve correctly
+  - Fundamentals not required for universe membership — min_market_cap filter optional (null skips)
+  - yfinance is demo-only — DataAccess protocol abstracts storage for production datasets
+  - Exchange code mapping in download script (NMS/NCM/NGM → NASDAQ, etc.) — yfinance returns non-standard codes
+
+- What Didn't Work:
+  - Metadata as_of_date only at dataset end — Mag 7 tests failed on historical eval dates; fixed with first+last trade date rows
+  - Price filter on non-trading eval dates — passes_price_filter now uses last bar on or before eval date
+  - Edge-case fixture date range too short for 252-day history filter — extended generator to 1300 days
+  - Circular imports from eager schema re-exports — already fixed in Session 1; no recurrence in data layer
+
+- Tasks Completed:
+  - Task 1: Add data deps, download script, Mag 7 Parquet dataset
+  - Task 2: ParquetLoader + DatasetManifest + InMemoryDataStore (PIT)
+  - Task 3: Dataset validation (price, volume, fundamentals, corporate actions)
+  - Task 4: Corporate action adjuster + PIT filter
+  - Task 5: DefaultUniverseBuilder + liquidity + validator (optional market cap)
+  - Task 6: Unit tests, edge-case fixtures, verification
+
