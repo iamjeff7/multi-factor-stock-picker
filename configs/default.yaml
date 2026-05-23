@@ -1,0 +1,31 @@
+framework_version: "2.0.0"
+data_dir: data
+results_dir: results
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  cache_dir: data/cache
+  data_version: data_001
+
+universe:
+  allowed_exchanges:
+    - NYSE
+    - NASDAQ
+    - NYSE_AMERICAN
+  allowed_security_types:
+    - COMMON_STOCK
+  min_price: 5.00
+  min_average_daily_dollar_volume: 1000000
+  min_market_cap: null
+  minimum_trading_history_days: 252
+
+backtest:
+  initial_capital: 100000
+  execution_price: NEXT_OPEN
+  commission_pct: 0.0
+  commission_per_trade: null
+  slippage_pct: 0.001
+  rebalance_frequency: MONTHLY
+  portfolio_mode: TOP_N
+  position_size_method: EQUAL_WEIGHT

@@ -1,0 +1,1 @@
+"""Time exit signal implementations."""

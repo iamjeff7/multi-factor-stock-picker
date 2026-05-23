@@ -1,0 +1,10 @@
+allowed_exchanges:
+  - NYSE
+  - NASDAQ
+  - NYSE_AMERICAN
+allowed_security_types:
+  - COMMON_STOCK
+min_price: 5.00
+min_average_daily_dollar_volume: 1000000
+min_market_cap: null
+minimum_trading_history_days: 252

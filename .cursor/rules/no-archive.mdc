@@ -1,0 +1,10 @@
+---
+description: Never read or reference files in archive/
+alwaysApply: true
+---
+
+# Archive folder is off limits
+
+- Do NOT read, search, or reference any file under `archive/`
+- Do NOT use `archive/` specs as source of truth
+- Use `docs/` (especially `docs/tier_1/`) for specifications

@@ -1,0 +1,1 @@
+"""Exit signal evaluation interfaces."""

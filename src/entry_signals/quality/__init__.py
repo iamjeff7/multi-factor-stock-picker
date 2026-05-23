@@ -1,0 +1,1 @@
+"""Quality entry signal implementations."""

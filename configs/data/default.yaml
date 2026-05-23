@@ -1,0 +1,4 @@
+raw_dir: data/raw
+processed_dir: data/processed
+cache_dir: data/cache
+data_version: data_001

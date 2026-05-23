@@ -1,0 +1,5 @@
+- [x] Task 1: Reconcile CLAUDE.md and migrate docs to docs/requirements/
+- [x] Task 2: Migrate config/ to configs/ and create top-level dirs
+- [x] Task 3: Reorganize src/ — schemas, data/universe, entry_signals, exit_signals
+- [x] Task 4: Add factors subdirs, backtest stubs, evaluation, reporting
+- [x] Task 5: Update pyproject.toml, tests, README, run verification
