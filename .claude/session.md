@@ -1,21 +1,25 @@
-**Current Task:** Task 5: Update pyproject.toml, tests, README, run verification
+**Current Task:** Data layer — complete, awaiting commit
 Status: Complete
 
 ## What's Done
-- Migrated docs/tier_1 → docs/requirements/ (6 core specs with v2_ prefix)
-- Migrated config/ → configs/ with data, entry_signals, exit_signals, experiments subdirs
-- Created data/cache/, experiments/, results/ subdirs
-- Reorganized src/: schemas/, data/universe/, entry_signals/, exit_signals/, factors subdirs
-- Added backtest engine/execution/position_sizing/statistics stubs
-- Added evaluation/ and reporting/ modules
-- Removed old modules: universe, entry, exit, portfolio, results (top-level)
-- Updated CLAUDE.md, README, pyproject.toml, tests
+- ParquetLoader, InMemoryDataStore (PIT), DatasetValidator
+- CorporateActionAdjuster, DefaultUniverseBuilder, DefaultUniverseValidator
+- scripts/download_mag7_data.py (yfinance → Parquet)
+- scripts/generate_edge_case_data.py (synthetic edge cases)
+- tests/fixtures/data/mag7/ and edge_cases/
+- tests/data/ — 11 tests; full suite 14 passing
+
+## Verification (2026-05-23)
+- `ruff check src/ tests/ scripts/` — pass
+- `mypy src/` — pass
+- `pytest tests/` — 14 passed
 
 ## Next Steps
-1. Commit changes
+1. Commit data layer changes (when requested)
+2. Factor pipeline (scoring, combination, IC, performance) — not started
 
 ## Context
-- Import examples: `from data.universe.protocols import UniverseBuilder`, `from schemas.entry import SignalMetadata`
-- PortfolioConstructor moved to backtest/position_sizing.py
-- ResultStore moved to reporting/protocols.py
-- archive/ remains off limits
+- Fundamentals not required for universe membership
+- min_market_cap optional (null = skipped)
+- Metadata uses point-in-time as_of_date rows (first + last trade date in download script)
+- yfinance is demo-only; DataAccess abstracts storage

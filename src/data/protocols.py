@@ -54,6 +54,8 @@ class DataAccess(Protocol):
         security_id: SecurityId,
     ) -> DelistingInfo | None: ...
 
+    def list_security_ids(self) -> Sequence[SecurityId]: ...
+
 
 class DataValidator(Protocol):
     """Validates datasets before research execution."""

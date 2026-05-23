@@ -6,28 +6,51 @@ Multi-factor stock research framework.
 
 See `CLAUDE.md` for the canonical project layout.
 
-Key import patterns:
-
-```python
-from data.protocols import DataAccess
-from data.universe.protocols import UniverseBuilder
-from entry_signals.protocols import EntrySignal
-from schemas.entry import SignalMetadata
-from reporting.protocols import ResultStore
-```
-
 ## Setup
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,data]"
+```
+
+## Example dataset (Mag 7)
+
+Download AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA via yfinance:
+
+```bash
+python scripts/download_mag7_data.py --output data/raw/mag7_001
+```
+
+Generate synthetic edge-case fixtures for tests:
+
+```bash
+python scripts/generate_edge_case_data.py
+```
+
+## Data layer usage
+
+```python
+from pathlib import Path
+from data.loaders import ParquetLoader
+from data.store import InMemoryDataStore
+from data.validation import DatasetValidator
+from data.universe import DefaultUniverseBuilder
+from datetime import date
+
+dataset = ParquetLoader().load(Path("data/raw/mag7_001"))
+store = InMemoryDataStore(dataset)
+
+report = DatasetValidator().validate_all(dataset)
+assert report.passed
+
+snapshot = DefaultUniverseBuilder().build_membership(date(2024, 6, 3), store)
 ```
 
 ## Verification
 
 ```bash
-ruff check src/ tests/
+ruff check src/ tests/ scripts/
 mypy src/
-pytest
+pytest tests/data/ -v
 ```
 
 ## Configuration

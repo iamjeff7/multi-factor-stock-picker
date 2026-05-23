@@ -1,0 +1,8 @@
+data_version: edge_cases_001
+creation_timestamp: '2026-01-01T00:00:00+00:00'
+description: Synthetic edge cases for universe filtering tests
+tickers:
+- NORMAL
+- ILLIQ
+- DELIST
+- IPO

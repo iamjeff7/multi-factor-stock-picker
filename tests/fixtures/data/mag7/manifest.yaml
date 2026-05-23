@@ -1,0 +1,11 @@
+data_version: mag7_001
+creation_timestamp: '2026-05-23T15:01:03.321079+00:00'
+description: Mag 7 US equities downloaded via yfinance (demo dataset)
+tickers:
+- AAPL
+- MSFT
+- GOOGL
+- AMZN
+- META
+- NVDA
+- TSLA

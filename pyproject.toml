@@ -6,15 +6,21 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
+    "pyarrow>=14.0",
+    "pandas>=2.0",
     "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
+data = [
+    "yfinance>=0.2",
+]
 dev = [
     "mypy>=1.8",
     "pytest>=8.0",
     "ruff>=0.4",
     "types-PyYAML>=6.0",
+    "pandas-stubs>=2.0",
 ]
 
 [build-system]
@@ -28,6 +34,7 @@ packages = [
     "src/schemas",
     "src/data",
     "src/data/loaders",
+    "src/data/store",
     "src/data/universe",
     "src/data/corporate_actions",
     "src/data/validation",

@@ -1,5 +1,6 @@
-- [x] Task 1: Reconcile CLAUDE.md and migrate docs to docs/requirements/
-- [x] Task 2: Migrate config/ to configs/ and create top-level dirs
-- [x] Task 3: Reorganize src/ — schemas, data/universe, entry_signals, exit_signals
-- [x] Task 4: Add factors subdirs, backtest stubs, evaluation, reporting
-- [x] Task 5: Update pyproject.toml, tests, README, run verification
+- [x] Task 1: Add data deps, download script, Mag 7 Parquet dataset
+- [x] Task 2: ParquetLoader + DatasetManifest + InMemoryDataStore (PIT)
+- [x] Task 3: Dataset validation (price, volume, fundamentals, corporate actions)
+- [x] Task 4: Corporate action adjuster + PIT filter
+- [x] Task 5: DefaultUniverseBuilder + liquidity + validator (optional market cap)
+- [x] Task 6: Unit tests, edge-case fixtures, verification
