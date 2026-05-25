@@ -17,6 +17,8 @@ def build_backtest_report_manifest(
     has_summary: bool,
     has_config: bool,
     has_version: bool,
+    has_experiment_summary: bool = False,
+    has_experiment_report: bool = False,
 ) -> ExperimentReportManifest:
     """Build a manifest describing persisted backtest artifacts."""
     generated_at = datetime.now(tz=UTC)
@@ -74,8 +76,38 @@ def build_backtest_report_manifest(
                 generated_at=generated_at,
                 source_artifacts=[
                     ResultLayout.TRADES_FILE,
-                    ResultLayout.EQUITY_CURVE,
                     ResultLayout.BACKTEST_SUMMARY,
+                ],
+            )
+        )
+    if has_experiment_summary:
+        artifacts.append(
+            _artifact(
+                experiment_id,
+                report_id="experiment_summary",
+                report_type="experiment_summary",
+                relative_path=ResultLayout.EXPERIMENT_SUMMARY,
+                generated_at=generated_at,
+                source_artifacts=[
+                    ResultLayout.STOCK_SUMMARIES,
+                    ResultLayout.EXPERIMENT_SUMMARY,
+                ],
+            )
+        )
+    if has_experiment_report:
+        artifacts.append(
+            _artifact(
+                experiment_id,
+                report_id="experiment_report",
+                report_type="experiment_report",
+                relative_path=ResultLayout.EXPERIMENT_REPORT,
+                generated_at=generated_at,
+                format="json",
+                source_artifacts=[
+                    ResultLayout.TRADES_FILE,
+                    ResultLayout.STOCK_SUMMARIES,
+                    ResultLayout.EXPERIMENT_SUMMARY,
+                    ResultLayout.EXPERIMENT_REPORT,
                 ],
             )
         )
@@ -94,13 +126,14 @@ def _artifact(
     relative_path: str,
     generated_at: datetime,
     source_artifacts: list[str] | None = None,
+    format: str = "parquet",
 ) -> ReportArtifactRecord:
     return ReportArtifactRecord(
         experiment_id=experiment_id,
         report_id=report_id,
         report_type=report_type,
         generated_at=generated_at,
-        format="parquet",
+        format=format,
         relative_path=relative_path,
         source_artifacts=source_artifacts or [relative_path],
     )

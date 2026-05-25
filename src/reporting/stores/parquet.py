@@ -21,6 +21,7 @@ from schemas.results import (
     ExitSignalResultRecord,
     ExperimentMetadata,
     ExperimentReportManifest,
+    ExperimentSummaryRecord,
     FactorScoreRecord,
     PortfolioSelectionRecord,
     PortfolioSnapshotRecord,
@@ -92,6 +93,9 @@ class ParquetResultStore:
             return
         self._write_rows(rows, ResultLayout.STOCK_SUMMARIES)
 
+    def save_experiment_summary(self, summary: ExperimentSummaryRecord) -> None:
+        self._write_single(summary, ResultLayout.EXPERIMENT_SUMMARY)
+
     def save_robustness_score(self, score: RobustnessScoreRecord) -> None:
         self._write_single(score, ResultLayout.ROBUSTNESS_SCORE)
 
@@ -111,6 +115,12 @@ class ParquetResultStore:
         if not path.exists():
             return None
         return read_record(path, ExperimentMetadata)
+
+    def load_experiment_summary(self, experiment_id: str) -> ExperimentSummaryRecord | None:
+        path = self.experiment_path(experiment_id) / ResultLayout.EXPERIMENT_SUMMARY
+        if not path.exists():
+            return None
+        return read_record(path, ExperimentSummaryRecord)
 
     def load_trades(self, experiment_id: str) -> list[TradeRecord]:
         return self._read_rows(experiment_id, ResultLayout.TRADES_FILE, TradeRecord)

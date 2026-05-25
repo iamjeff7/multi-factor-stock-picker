@@ -31,6 +31,7 @@ from schemas.results import (
     ExitSignalResultRecord,
     ExperimentMetadata,
     ExperimentReportManifest,
+    ExperimentSummaryRecord,
     FactorScoreRecord,
     PortfolioSelectionRecord,
     PortfolioSnapshotRecord,
@@ -173,6 +174,27 @@ class ResultSchemaValidator:
                 )
         return self._report(issues)
 
+    def validate_experiment_summary(self, summary: ExperimentSummaryRecord) -> ValidationReport:
+        issues: list[ValidationIssue] = []
+        completed_plus_skipped = summary.securities_completed + summary.securities_skipped
+        if completed_plus_skipped != summary.securities_requested:
+            issues.append(
+                ValidationIssue(
+                    check_name="security_count_mismatch",
+                    message="Completed + skipped securities != requested securities",
+                )
+            )
+        if summary.win_rate is not None and (
+            summary.win_rate < Decimal("0") or summary.win_rate > Decimal("1")
+        ):
+            issues.append(
+                ValidationIssue(
+                    check_name="invalid_win_rate",
+                    message="Experiment win rate out of range",
+                )
+            )
+        return self._report(issues)
+
     def validate_robustness_score(self, score: RobustnessScoreRecord) -> ValidationReport:
         return self._report([])
 
@@ -296,6 +318,9 @@ class ResultSchemaValidator:
 
     def validate_stock_summaries_or_raise(self, rows: Sequence[StockSummaryRecord]) -> None:
         self._raise_if_failed(self.validate_stock_summaries(rows))
+
+    def validate_experiment_summary_or_raise(self, summary: ExperimentSummaryRecord) -> None:
+        self._raise_if_failed(self.validate_experiment_summary(summary))
 
     def validate_robustness_score_or_raise(self, score: RobustnessScoreRecord) -> None:
         self._raise_if_failed(self.validate_robustness_score(score))

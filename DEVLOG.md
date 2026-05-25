@@ -129,3 +129,56 @@
   - Task 11: Performance statistics calculator
   - Task 12: Backtest validator + in-memory result store
   - Task 13: Tests + example run script
+
+## Session 5 — 2026-05-25 19:13:29
+
+- Goal: Implement validated result persistence per v2_result_schema_specification.md
+
+- What I Built:
+  - `src/reporting/stores/` — InMemoryResultStore, ParquetResultStore, ValidatingResultStore
+  - `src/reporting/validator.py` — ResultSchemaValidator for all record types
+  - `src/reporting/aggregators.py` — StockSummaryRecord derivation from trades
+  - `src/reporting/serialization.py` — Parquet round-trip with null handling
+  - `src/schemas/results.py` — StockSummaryRecord, report manifest schemas
+  - `src/backtest/engine.py` — persists config, version, stock summaries, manifest
+  - `scripts/run_single_stock_backtest.py` — `--output-dir` for Parquet persistence
+  - `tests/reporting/` — validator, store, aggregator tests (15 tests)
+
+- Decisions Made:
+  - ValidatingResultStore wraps any store — validate-then-write per spec §20
+  - Parquet store rejects overwrites — immutability per spec §3.1
+  - Layer B stock summaries derived post-backtest; Layer A storage ready for factor pipeline
+  - Report manifest stored as artifact rows, not nested single Parquet row
+
+- What Didn't Work:
+  - Parquet NaN/null round-trip required explicit NaN→None in deserialization
+
+- Tasks Completed:
+  - Task 14: Result schemas
+  - Task 15: Validation layer
+  - Task 16: Storage layer
+  - Task 17: Engine integration
+  - Task 18: Reporting tests
+
+## Session 6 — 2026-05-25 19:25:00
+
+- Goal: Build cross-sectional single-factor experiment orchestration
+
+- What I Built:
+  - `src/backtest/experiment_runner.py` — SingleFactorExperimentRunner with per-stock capital reset
+  - `src/backtest/experiment_config.py` — SingleFactorExperimentConfig + YAML loading
+  - `src/reporting/experiment_aggregators.py` — trade, stock, experiment metric aggregation
+  - `src/reporting/generators/experiment_report.py` — JSON experiment report
+  - `scripts/run_single_factor_experiment.py` — mag7 example experiment
+  - `configs/experiments/mag7_stub_single_factor.yaml` — example config
+
+- Decisions Made:
+  - One parent experiment_id; per-stock runs skip individual persistence
+  - Experiment return metrics are cross-sectional across stocks, not combined portfolio
+  - Nested config dicts JSON-encoded in Parquet serialization
+
+- What Didn't Work:
+  - Empty SignalConfig params dict broke Parquet struct serialization (fixed via JSON encoding)
+
+- Tasks Completed:
+  - Task 19–22: Experiment runner, aggregators, report, tests

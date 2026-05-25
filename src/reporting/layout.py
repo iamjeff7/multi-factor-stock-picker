@@ -37,8 +37,10 @@ class ResultLayout:
     EQUITY_CURVE = "snapshots/equity_curve.parquet"
     BACKTEST_SUMMARY = "summaries/backtest_summary.parquet"
     STOCK_SUMMARIES = "summaries/stock_summaries.parquet"
+    EXPERIMENT_SUMMARY = "summaries/experiment_summary.parquet"
     ROBUSTNESS_SCORE = "robustness/robustness_score.parquet"
     REPORT_MANIFEST = "reports/manifest.parquet"
+    EXPERIMENT_REPORT = "reports/experiment_report.json"
 
     @classmethod
     def experiment_dir(cls, experiment_id: str) -> Path:

@@ -204,3 +204,20 @@ class ReportArtifactRecord(BaseModel):
 class ExperimentReportManifest(BaseModel):
     experiment_id: ExperimentId
     artifacts: list[ReportArtifactRecord] = Field(default_factory=list)
+
+
+class ExperimentSummaryRecord(BaseModel):
+    experiment_id: ExperimentId
+    securities_requested: int
+    securities_completed: int
+    securities_skipped: int
+    mean_stock_return: Decimal | None = None
+    median_stock_return: Decimal | None = None
+    pct_stocks_positive: Decimal | None = None
+    best_stock_return: Decimal | None = None
+    worst_stock_return: Decimal | None = None
+    number_of_trades: int
+    win_rate: Decimal | None = None
+    profit_factor: Decimal | None = None
+    average_trade: Decimal | None = None
+    total_net_pnl: Decimal | None = None

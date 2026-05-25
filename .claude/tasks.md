@@ -16,3 +16,7 @@
 - [x] Task 16: Storage layer (InMemoryResultStore, ParquetResultStore, ValidatingResultStore)
 - [x] Task 17: Engine integration + example script --output-dir
 - [x] Task 18: Reporting tests (validator, stores, aggregators, parquet round-trip)
+- [x] Task 19: Experiment config + ExperimentSummaryRecord schemas
+- [x] Task 20: Experiment aggregators + validator extensions
+- [x] Task 21: SingleFactorExperimentRunner + report generator + script
+- [x] Task 22: Experiment runner tests

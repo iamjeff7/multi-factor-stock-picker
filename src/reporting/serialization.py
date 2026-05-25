@@ -19,7 +19,10 @@ T = TypeVar("T", bound=BaseModel)
 def records_to_dataframe(rows: Sequence[BaseModel]) -> pd.DataFrame:
     if not rows:
         return pd.DataFrame()
-    serialized = [_serialize_record(row.model_dump(mode="json")) for row in rows]
+    serialized = [
+        {key: _serialize_value(value) for key, value in row.model_dump(mode="json").items()}
+        for row in rows
+    ]
     return pd.DataFrame(serialized)
 
 
@@ -54,11 +57,13 @@ def read_record(path: Path, model: type[T]) -> T | None:
     return records[0]
 
 
-def _serialize_record(value: object) -> object:
+def _serialize_value(value: object) -> object:
     if isinstance(value, dict):
-        return {key: _serialize_record(item) for key, item in value.items()}
+        return json.dumps(value, default=str)
     if isinstance(value, list):
-        return [_serialize_record(item) for item in value]
+        if value and all(isinstance(item, dict) for item in value):
+            return json.dumps(value, default=str)
+        return [_serialize_value(item) for item in value]
     if isinstance(value, Decimal):
         return str(value)
     if isinstance(value, datetime):
@@ -73,12 +78,12 @@ def _deserialize_record(value: object) -> object:
         return None
     if isinstance(value, float) and isnan(value):
         return None
+    if isinstance(value, str) and _looks_like_json_dict(value):
+        return json.loads(value)
     if isinstance(value, dict):
         return {key: _deserialize_record(item) for key, item in value.items()}
     if isinstance(value, list):
         return [_deserialize_record(item) for item in value]
-    if isinstance(value, str) and _looks_like_json_dict(value):
-        return json.loads(value)
     return value
 
 

@@ -5,6 +5,8 @@ from backtest.config import BacktestConfig, SingleStockBacktestConfig
 from backtest.engine import SingleStockBacktestEngine
 from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy, ThresholdEntryPolicy
 from backtest.execution import ExecutionFill, NextBarExecutionModel
+from backtest.experiment_config import SingleFactorExperimentConfig
+from backtest.experiment_runner import SingleFactorExperimentRunner
 from backtest.position_sizing import (
     FixedDollarSizer,
     FullCapitalSizer,
@@ -39,6 +41,8 @@ __all__ = [
     "SignalPresentEntryPolicy",
     "SingleStockBacktestConfig",
     "SingleStockBacktestEngine",
+    "SingleFactorExperimentConfig",
+    "SingleFactorExperimentRunner",
     "ThresholdEntryPolicy",
     "BacktestValidator",
     "build_position_sizer",

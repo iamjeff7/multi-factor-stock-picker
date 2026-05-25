@@ -14,6 +14,7 @@ from schemas.results import (
     ExitSignalResultRecord,
     ExperimentMetadata,
     ExperimentReportManifest,
+    ExperimentSummaryRecord,
     FactorScoreRecord,
     PortfolioSelectionRecord,
     PortfolioSnapshotRecord,
@@ -41,6 +42,7 @@ class InMemoryResultStore:
         self.equity_curve: list[EquityCurveRecord] = []
         self.summary: BacktestSummaryRecord | None = None
         self.stock_summaries: list[StockSummaryRecord] = []
+        self.experiment_summary: ExperimentSummaryRecord | None = None
         self.robustness_score: RobustnessScoreRecord | None = None
         self.configuration_snapshot: ConfigurationSnapshotRecord | None = None
         self.version_metadata: VersionMetadataRecord | None = None
@@ -100,6 +102,12 @@ class InMemoryResultStore:
         if self.stock_summaries:
             raise ValidationError("Stock summaries already persisted")
         self.stock_summaries.extend(rows)
+
+    def save_experiment_summary(self, summary: ExperimentSummaryRecord) -> None:
+        self._require_experiment()
+        if self.experiment_summary is not None:
+            raise ValidationError("Experiment summary already persisted")
+        self.experiment_summary = summary
 
     def save_robustness_score(self, score: RobustnessScoreRecord) -> None:
         self._require_experiment()
