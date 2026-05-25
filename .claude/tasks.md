@@ -11,3 +11,8 @@
 - [x] Task 11: Performance statistics calculator
 - [x] Task 12: Backtest validator + in-memory result store
 - [x] Task 13: Tests + example run script
+- [x] Task 14: Result schemas (StockSummaryRecord, report manifest, PK helpers)
+- [x] Task 15: ResultSchemaValidator + extended SchemaValidator protocol
+- [x] Task 16: Storage layer (InMemoryResultStore, ParquetResultStore, ValidatingResultStore)
+- [x] Task 17: Engine integration + example script --output-dir
+- [x] Task 18: Reporting tests (validator, stores, aggregators, parquet round-trip)

@@ -1,43 +1,37 @@
 ## Global Guidelines
 - Never read or reference anything under `archive/`
-- Implement per `docs/requirements/v2_backtest_methodology_specification.md`
-- Single-stock scope only (`PortfolioMode.SINGLE`); no factor scoring or ranking
-- Reuse existing signal interfaces (`EntrySignal`, `ExitSignal`) and `DataAccess`
-- Signal on T executes on T+1 (look-ahead protection per spec §7)
-- Point-in-time data access only; failures halt execution (spec §21)
+- Implement per `docs/requirements/v2_result_schema_specification.md`
+- Validate all outputs against schemas before persistence
+- Parquet preferred format; immutable experiment directories
+- Stock results: Layer A (per-security signal/score records) + Layer B (StockSummaryRecord)
 
 ## Verification & Definition of Done
 - `ruff check src/ tests/ scripts/`
 - `mypy src/`
-- `pytest tests/backtest/ -v` — all pass
+- `pytest tests/ -v` — all pass
 - `python scripts/run_single_stock_backtest.py` — example run completes with summary output
+- `python scripts/run_single_stock_backtest.py --output-dir /tmp/exp_test` — Parquet persistence
 
-## Task 8: Backtest config + portfolio state schemas
-- Extend backtest config with `security_id`, `ticker`, `start_date`, `end_date`, sizing params
-- Add runtime models: `PortfolioState`, `PendingOrder`, `OpenPosition`, `ClosedTrade`
-- Entry policy protocol (converts raw signal → enter/hold without factor scoring)
+## Task 14: Result schemas
+- Add `StockSummaryRecord`, `ReportArtifactRecord`, `ExperimentReportManifest`
+- Add primary key helpers in `reporting/keys.py`
+- Tests in `tests/schemas/test_results.py`
 
-## Task 9: Execution model + position sizer
-- `NextBarExecutionModel` — NEXT_OPEN / NEXT_CLOSE / NEXT_VWAP fill prices from `DataAccess`
-- Apply slippage and commission per spec §13–14
-- `PositionSizer` implementations: `FixedDollarSizer`, `FullCapitalSizer` (single-stock equal weight)
+## Task 15: Validation layer
+- `ResultSchemaValidator` with schema, referential, and consistency checks
+- Cross-check `validate_stock_summary_matches_trades`
+- Extend `SchemaValidator` protocol to all record types
 
-## Task 10: SingleStockBacktestEngine + trade lifecycle
-- Daily loop: entry eval on rebalance dates, exit eval daily when position open
-- Queue orders on signal date T, execute on T+1
-- Track position context (highest/lowest since entry, holding period, unrealized PnL)
-- Handle delisting exits and split share adjustments
-- Record trades, positions, portfolio snapshots, equity curve
+## Task 16: Storage layer
+- `InMemoryResultStore` (complete, moved to `reporting/stores/`)
+- `ParquetResultStore` with immutable writes and read-back loaders
+- `ValidatingResultStore` wrapper
+- `aggregate_stock_summaries` in `reporting/aggregators.py`
 
-## Task 11: Performance statistics calculator
-- `DefaultPerformanceCalculator` from trades + equity curve
-- Required metrics per spec §19: total return, CAGR, volatility, Sharpe, Sortino, max drawdown, Calmar, win rate, profit factor, avg trade, trade count, turnover
+## Task 17: Engine integration
+- Persist config snapshot, version metadata, stock summaries, report manifest
+- Example script supports `--output-dir` for Parquet persistence
 
-## Task 12: Backtest validator + in-memory result store
-- `BacktestValidator` — cash/equity consistency, no negative shares, no future fills
-- `InMemoryResultStore` for tests and example runs (implements `ResultStore` subset)
-
-## Task 13: Tests + example run script
-- Unit tests: execution pricing, slippage, sizing, entry/exit lifecycle, delisting, statistics
-- Integration test on synthetic price series (deterministic, no network)
-- `scripts/run_single_stock_backtest.py` using mag7 fixture + example signal stubs
+## Task 18: Tests
+- `tests/reporting/` — validator, memory store, parquet store, aggregators
+- `tests/backtest/test_engine.py` — parquet integration test

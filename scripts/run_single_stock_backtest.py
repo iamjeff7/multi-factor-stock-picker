@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 from datetime import date
 from pathlib import Path
@@ -15,16 +16,29 @@ if str(SRC) not in sys.path:
 from backtest.config import SingleStockBacktestConfig  # noqa: E402
 from backtest.engine import SingleStockBacktestEngine  # noqa: E402
 from backtest.entry_policy import SignalPresentEntryPolicy  # noqa: E402
-from backtest.result_store import InMemoryResultStore  # noqa: E402
 from core.enums import PortfolioMode, PositionSizeMethod, RebalanceFrequency  # noqa: E402
 from core.types import SecurityId, Ticker  # noqa: E402
 from data.loaders import ParquetLoader  # noqa: E402
 from data.store import InMemoryDataStore  # noqa: E402
 from entry_signals.examples.stub_entry_signal import ExampleStubEntrySignal  # noqa: E402
 from exit_signals.examples.stub_exit_signal import ExampleStubExitSignal  # noqa: E402
+from reporting.stores import (  # noqa: E402
+    InMemoryResultStore,
+    ParquetResultStore,
+    ValidatingResultStore,
+)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Run an example single-stock backtest")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Persist validated results as Parquet under this directory",
+    )
+    args = parser.parse_args()
+
     fixture_dir = ROOT / "tests" / "fixtures" / "data" / "mag7"
     if not fixture_dir.exists():
         raise SystemExit(f"Fixture dataset not found: {fixture_dir}")
@@ -46,7 +60,13 @@ def main() -> None:
         experiment_name="example_aapl_stub_signals",
     )
 
-    result_store = InMemoryResultStore()
+    if args.output_dir is not None:
+        result_store: InMemoryResultStore | ValidatingResultStore = ValidatingResultStore(
+            ParquetResultStore(args.output_dir)
+        )
+    else:
+        result_store = InMemoryResultStore()
+
     engine = SingleStockBacktestEngine()
     result = engine.run(
         config=config,
@@ -57,7 +77,20 @@ def main() -> None:
         result_store=result_store,
     )
 
-    summary = result_store.summary
+    inner_store = (
+        result_store.inner
+        if isinstance(result_store, ValidatingResultStore)
+        else result_store
+    )
+    if isinstance(inner_store, InMemoryResultStore):
+        summary = inner_store.summary
+        stock_summaries = inner_store.stock_summaries
+    else:
+        parquet_store = inner_store
+        assert isinstance(parquet_store, ParquetResultStore)
+        summary = parquet_store.load_backtest_summary(str(result.experiment_id))
+        stock_summaries = parquet_store.load_stock_summaries(str(result.experiment_id))
+
     if summary is None:
         raise SystemExit("Backtest did not produce a summary")
 
@@ -68,6 +101,12 @@ def main() -> None:
     print(f"Max drawdown: {summary.max_drawdown}")
     print(f"Sharpe ratio: {summary.sharpe_ratio}")
     print(f"Number of trades: {summary.number_of_trades}")
+    if stock_summaries:
+        stock_summary = stock_summaries[0]
+        print(f"Stock net PnL: {stock_summary.total_net_pnl}")
+        print(f"Stock win rate: {stock_summary.win_rate}")
+    if args.output_dir is not None:
+        print(f"Results persisted to: {args.output_dir / str(result.experiment_id)}")
 
 
 if __name__ == "__main__":

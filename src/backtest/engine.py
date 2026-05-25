@@ -38,15 +38,20 @@ from core.types import (
 from data.protocols import DataAccess
 from entry_signals.protocols import EntrySignal
 from exit_signals.protocols import ExitSignal
+from reporting.aggregators import aggregate_stock_summaries
+from reporting.manifest import build_backtest_report_manifest
 from reporting.protocols import ResultStore
+from reporting.stores.validating import ValidatingResultStore
 from schemas.backtest import EquityCurvePoint, PortfolioSnapshot
 from schemas.enums import ExitDecision
 from schemas.results import (
     BacktestSummaryRecord,
+    ConfigurationSnapshotRecord,
     EquityCurveRecord,
     ExperimentMetadata,
     PortfolioSnapshotRecord,
     TradeRecord,
+    VersionMetadataRecord,
 )
 from schemas.universe import UniverseMembership, UniverseMembershipSnapshot, UniverseMetadata
 
@@ -195,6 +200,8 @@ class SingleStockBacktestEngine:
                 experiment_id=experiment_id,
                 result=result,
                 summary=summary,
+                entry_signal=entry_signal,
+                exit_signal=exit_signal,
             )
 
         return result
@@ -525,12 +532,15 @@ class SingleStockBacktestEngine:
         experiment_id: ExperimentId,
         result: BacktestRunResult,
         summary: object,
+        entry_signal: EntrySignal,
+        exit_signal: ExitSignal,
     ) -> None:
         from schemas.backtest import BacktestSummary
 
         if not isinstance(summary, BacktestSummary):
             raise ValidationError("Expected BacktestSummary for persistence")
 
+        config_hash = ConfigurationHash(self._configuration_hash(config))
         result_store.create_experiment(
             ExperimentMetadata(
                 experiment_id=experiment_id,
@@ -539,30 +549,56 @@ class SingleStockBacktestEngine:
                 execution_timestamp=datetime.now(tz=UTC),
                 data_version=DataVersion(str(data_access.data_version)),
                 universe_version=UniverseVersion("single_stock"),
-                configuration_hash=ConfigurationHash(self._configuration_hash(config)),
+                configuration_hash=config_hash,
                 framework_version="2.0.0",
                 status=ExperimentStatus.COMPLETED,
             )
         )
-        result_store.save_trades(
-            [
-                TradeRecord(
-                    experiment_id=experiment_id,
-                    trade_id=trade.trade_id,
-                    security_id=trade.security_id,
-                    ticker=trade.ticker,
-                    entry_date=trade.entry_date,
-                    entry_price=trade.entry_price,
-                    exit_date=trade.exit_date,
-                    exit_price=trade.exit_price,
-                    shares=trade.shares,
-                    gross_pnl=trade.gross_pnl,
-                    net_pnl=trade.net_pnl,
-                    holding_days=trade.holding_days,
-                )
-                for trade in result.trades
-            ]
+        result_store.save_configuration_snapshot(
+            ConfigurationSnapshotRecord(
+                experiment_id=experiment_id,
+                configuration_hash=config_hash,
+                configuration_json=config.model_dump(mode="json"),
+            )
         )
+        result_store.save_version_metadata(
+            VersionMetadataRecord(
+                experiment_id=experiment_id,
+                framework_version="2.0.0",
+                data_version=DataVersion(str(data_access.data_version)),
+                universe_version=UniverseVersion("single_stock"),
+                entry_signal_versions={
+                    str(entry_signal.metadata.signal_id): entry_signal.metadata.signal_version
+                },
+                exit_signal_versions={
+                    str(exit_signal.metadata.signal_id): exit_signal.metadata.signal_version
+                },
+                backtest_version="2.0.0",
+            )
+        )
+        trade_records = [
+            TradeRecord(
+                experiment_id=experiment_id,
+                trade_id=trade.trade_id,
+                security_id=trade.security_id,
+                ticker=trade.ticker,
+                entry_date=trade.entry_date,
+                entry_price=trade.entry_price,
+                exit_date=trade.exit_date,
+                exit_price=trade.exit_price,
+                shares=trade.shares,
+                gross_pnl=trade.gross_pnl,
+                net_pnl=trade.net_pnl,
+                holding_days=trade.holding_days,
+            )
+            for trade in result.trades
+        ]
+        result_store.save_trades(trade_records)
+        stock_summaries = aggregate_stock_summaries(trade_records)
+        if stock_summaries:
+            if isinstance(result_store, ValidatingResultStore):
+                result_store.validate_stock_summary_matches_trades(trade_records, stock_summaries)
+            result_store.save_stock_summaries(stock_summaries)
         result_store.save_portfolio_snapshots(
             [
                 PortfolioSnapshotRecord(
@@ -606,5 +642,15 @@ class SingleStockBacktestEngine:
                 average_trade=summary.average_trade,
                 number_of_trades=summary.number_of_trades,
                 turnover=summary.turnover,
+            )
+        )
+        result_store.save_report_manifest(
+            build_backtest_report_manifest(
+                experiment_id,
+                has_trades=bool(trade_records),
+                has_stock_summaries=bool(stock_summaries),
+                has_summary=True,
+                has_config=True,
+                has_version=True,
             )
         )

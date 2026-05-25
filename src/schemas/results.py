@@ -172,3 +172,35 @@ class VersionMetadataRecord(BaseModel):
     entry_signal_versions: dict[str, str] = Field(default_factory=dict)
     exit_signal_versions: dict[str, str] = Field(default_factory=dict)
     backtest_version: str | None = None
+
+
+class StockSummaryRecord(BaseModel):
+    experiment_id: ExperimentId
+    security_id: SecurityId
+    ticker: Ticker
+    number_of_trades: int
+    closed_trades: int
+    open_trades: int
+    total_gross_pnl: Decimal | None = None
+    total_net_pnl: Decimal | None = None
+    average_return_pct: Decimal | None = None
+    win_rate: Decimal | None = None
+    profit_factor: Decimal | None = None
+    average_holding_days: Decimal | None = None
+    best_trade_pnl: Decimal | None = None
+    worst_trade_pnl: Decimal | None = None
+
+
+class ReportArtifactRecord(BaseModel):
+    experiment_id: ExperimentId
+    report_id: str
+    report_type: str
+    generated_at: datetime
+    format: str
+    relative_path: str
+    source_artifacts: list[str] = Field(default_factory=list)
+
+
+class ExperimentReportManifest(BaseModel):
+    experiment_id: ExperimentId
+    artifacts: list[ReportArtifactRecord] = Field(default_factory=list)
