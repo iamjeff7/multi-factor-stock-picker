@@ -1,0 +1,41 @@
+experiment_name: mag7_momentum_12_1
+start_date: 2023-01-03
+end_date: 2023-12-29
+initial_capital: 100000
+slippage_pct: 0.001
+commission_pct: 0.0
+rebalance_frequency: MONTHLY
+portfolio_mode: SINGLE
+position_size_method: EQUAL_WEIGHT
+
+research:
+  research_mode: DEMO
+  research_phase: VALIDATION
+  sample_scope: FULL
+
+securities:
+  - security_id: SEC_AAPL
+    ticker: AAPL
+  - security_id: SEC_MSFT
+    ticker: MSFT
+  - security_id: SEC_GOOGL
+    ticker: GOOGL
+  - security_id: SEC_AMZN
+    ticker: AMZN
+  - security_id: SEC_META
+    ticker: META
+  - security_id: SEC_NVDA
+    ticker: NVDA
+  - security_id: SEC_TSLA
+    ticker: TSLA
+
+entry_signal:
+  name: momentum_12_1
+  params:
+    lookback_days: 252
+    skip_days: 21
+
+exit_signal:
+  name: example_stub_exit
+  params:
+    max_holding_days: 63
