@@ -8,7 +8,7 @@ from decimal import Decimal
 from pydantic import BaseModel, model_validator
 
 from core.types import DataVersion, SecurityId, SignalId, Ticker, UniverseVersion
-from schemas.enums import SignalCategory, SignalDirection
+from schemas.enums import EntryMissingDataPolicy, SignalCategory, SignalDirection
 
 
 class SignalMetadata(BaseModel):
@@ -17,6 +17,7 @@ class SignalMetadata(BaseModel):
     signal_description: str | None = None
     signal_category: SignalCategory
     signal_version: str
+    missing_data_policy: EntryMissingDataPolicy
     higher_is_better: bool | None = None
     lower_is_better: bool | None = None
 

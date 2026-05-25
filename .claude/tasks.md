@@ -4,3 +4,4 @@
 - [x] Task 4: Corporate action adjuster + PIT filter
 - [x] Task 5: DefaultUniverseBuilder + liquidity + validator (optional market cap)
 - [x] Task 6: Unit tests, edge-case fixtures, verification
+- [x] Task 7: Signal interfaces (entry/exit base, validation, registry, examples, tests)

@@ -68,3 +68,31 @@
   - Task 5: DefaultUniverseBuilder + liquidity + validator (optional market cap)
   - Task 6: Unit tests, edge-case fixtures, verification
 
+
+## Session 3 — 2026-05-25 18:15:28
+
+- Goal: Implement entry/exit signal interfaces per v2 specs — base classes, validation, registry, and example stubs (no real signals)
+
+- What I Built:
+  - `src/entry_signals/base.py` — BaseEntrySignal template method with missing-data policies
+  - `src/entry_signals/validator.py` — EntrySignalValidator for inputs and batch outputs
+  - `src/entry_signals/examples/stub_entry_signal.py` — deterministic example stub
+  - `src/exit_signals/base.py` — BaseExitSignal with MissingSignalDataError handling
+  - `src/exit_signals/validator.py` — ExitSignalValidator for position inputs and EXIT/HOLD outputs
+  - `src/exit_signals/composite.py` — CompositeExitSignalImpl (ANY/ALL)
+  - `src/exit_signals/examples/stub_exit_signal.py` — time-threshold example stub
+  - `src/schemas/signals.py` — SignalRegistration with enabled flag
+  - `src/entry_signals/registry.py`, `src/exit_signals/registry.py` — enable/disable tracking
+  - `tests/entry_signals/`, `tests/exit_signals/` — 28 new tests; shared fixtures in tests/conftest.py
+
+- Decisions Made:
+  - get() returns disabled signals; list_enabled() filters — registry lookup stays stable
+  - SKIP_EVALUATION missing-data policy raises ValidationError — failures never silent per spec
+  - Example stubs live under examples/ — category folders (momentum/, stop_loss/) remain empty
+  - Non-finite raw values rejected in BaseEntrySignal before Pydantic model construction
+
+- What Didn't Work:
+  - Duplicate test module names across entry_signals/ and exit_signals/ — pytest import collision; renamed exit test files with exit_ prefix
+
+- Tasks Completed:
+  - Task 7: Signal interfaces (entry/exit base, validation, registry, examples, tests)

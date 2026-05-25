@@ -11,3 +11,7 @@ class ValidationError(MFSPError):
 
 class ConfigurationError(MFSPError):
     """Raised when configuration is invalid or missing."""
+
+
+class MissingSignalDataError(MFSPError):
+    """Raised when a signal cannot evaluate due to missing inputs."""

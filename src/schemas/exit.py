@@ -8,7 +8,12 @@ from decimal import Decimal
 from pydantic import BaseModel
 
 from core.types import DataVersion, PositionId, SecurityId, SignalId, Ticker
-from schemas.enums import ExitDecision
+from schemas.enums import (
+    EvaluationFrequency,
+    ExitCategory,
+    ExitDecision,
+    ExitMissingDataPolicy,
+)
 
 
 class PositionContext(BaseModel):
@@ -28,8 +33,10 @@ class ExitSignalMetadata(BaseModel):
     signal_id: SignalId
     signal_name: str
     signal_description: str | None = None
-    signal_category: str
+    signal_category: ExitCategory
     signal_version: str
+    missing_data_policy: ExitMissingDataPolicy
+    evaluation_frequency: EvaluationFrequency = EvaluationFrequency.DAILY
 
 
 class ExitSignalResult(BaseModel):

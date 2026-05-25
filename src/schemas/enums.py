@@ -64,3 +64,9 @@ class ExitMissingDataPolicy(StrEnum):
 class CompositeOperator(StrEnum):
     ANY = "ANY"
     ALL = "ALL"
+
+
+class EvaluationFrequency(StrEnum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"

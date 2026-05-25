@@ -1,0 +1,1 @@
+"""Example exit signal implementations."""
