@@ -1,40 +1,43 @@
 ## Global Guidelines
 - Never read or reference anything under `archive/`
-- Implement per `docs/requirements/v2_data_specification.md` and `v2_universe_specification.md`
-- No entry/exit signals, no backtesting
-- Point-in-time enforcement at the store layer
-- Fundamentals NOT required for universe membership
-- `min_market_cap` is optional (only when configured)
-- Example dataset: AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA via yfinance
+- Implement per `docs/requirements/v2_backtest_methodology_specification.md`
+- Single-stock scope only (`PortfolioMode.SINGLE`); no factor scoring or ranking
+- Reuse existing signal interfaces (`EntrySignal`, `ExitSignal`) and `DataAccess`
+- Signal on T executes on T+1 (look-ahead protection per spec §7)
+- Point-in-time data access only; failures halt execution (spec §21)
 
 ## Verification & Definition of Done
 - `ruff check src/ tests/ scripts/`
 - `mypy src/`
-- `pytest tests/data/ -v` — all pass
-- Download script produces Parquet under `data/raw/mag7_001/`
+- `pytest tests/backtest/ -v` — all pass
+- `python scripts/run_single_stock_backtest.py` — example run completes with summary output
 
-## Task 1: Dependencies and download
-- Add optional `[data]` deps: pyarrow, pandas, yfinance
-- `scripts/download_mag7_data.py` downloads 7 tickers to Parquet + manifest
-- Commit `tests/fixtures/data/` subset for CI
+## Task 8: Backtest config + portfolio state schemas
+- Extend backtest config with `security_id`, `ticker`, `start_date`, `end_date`, sizing params
+- Add runtime models: `PortfolioState`, `PendingOrder`, `OpenPosition`, `ClosedTrade`
+- Entry policy protocol (converts raw signal → enter/hold without factor scoring)
 
-## Task 2: Loading and store
-- `DatasetManifest`, `ParquetLoader`, `LoadedDataset`
-- `InMemoryDataStore` implements `DataAccess` with PIT filtering
+## Task 9: Execution model + position sizer
+- `NextBarExecutionModel` — NEXT_OPEN / NEXT_CLOSE / NEXT_VWAP fill prices from `DataAccess`
+- Apply slippage and commission per spec §13–14
+- `PositionSizer` implementations: `FixedDollarSizer`, `FullCapitalSizer` (single-stock equal weight)
 
-## Task 3: Validation
-- Price, volume, fundamental, corporate action validators
-- `DatasetValidator` orchestrates all checks
+## Task 10: SingleStockBacktestEngine + trade lifecycle
+- Daily loop: entry eval on rebalance dates, exit eval daily when position open
+- Queue orders on signal date T, execute on T+1
+- Track position context (highest/lowest since entry, holding period, unrealized PnL)
+- Handle delisting exits and split share adjustments
+- Record trades, positions, portfolio snapshots, equity curve
 
-## Task 4: Corporate actions
-- PIT filter for actions
-- `CorporateActionAdjuster` for splits/dividends
+## Task 11: Performance statistics calculator
+- `DefaultPerformanceCalculator` from trades + equity curve
+- Required metrics per spec §19: total return, CAGR, volatility, Sharpe, Sortino, max drawdown, Calmar, win rate, profit factor, avg trade, trade count, turnover
 
-## Task 5: Universe
-- ADDV liquidity (60-day window, data before eval date)
-- Filters: exchange, type, price, history, delisting, optional market cap
-- `DefaultUniverseBuilder`, `DefaultUniverseValidator`
+## Task 12: Backtest validator + in-memory result store
+- `BacktestValidator` — cash/equity consistency, no negative shares, no future fills
+- `InMemoryResultStore` for tests and example runs (implements `ResultStore` subset)
 
-## Task 6: Tests
-- PIT access tests, validation tests, adjuster tests, universe tests
-- Synthetic edge-case fixtures for delist/illiquid/IPO scenarios
+## Task 13: Tests + example run script
+- Unit tests: execution pricing, slippage, sizing, entry/exit lifecycle, delisting, statistics
+- Integration test on synthetic price series (deterministic, no network)
+- `scripts/run_single_stock_backtest.py` using mag7 fixture + example signal stubs

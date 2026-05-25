@@ -96,3 +96,36 @@
 
 - Tasks Completed:
   - Task 7: Signal interfaces (entry/exit base, validation, registry, examples, tests)
+
+## Session 4 — 2026-05-25 18:42:24
+
+- Goal: Implement single-stock backtest engine per v2 backtest methodology — entries, exits, sizing, trade lifecycle, statistics (no factor scoring/ranking)
+
+- What I Built:
+  - `src/backtest/engine.py` — SingleStockBacktestEngine with T→T+1 execution loop
+  - `src/backtest/config.py` — SingleStockBacktestConfig (portfolio_mode=SINGLE enforced)
+  - `src/backtest/execution.py` — NextBarExecutionModel with slippage and commission
+  - `src/backtest/position_sizing.py` — FixedDollarSizer and FullCapitalSizer
+  - `src/backtest/entry_policy.py` — SignalPresentEntryPolicy and ThresholdEntryPolicy
+  - `src/backtest/lifecycle.py` — order queue, open/close trades, split adjustment
+  - `src/backtest/statistics.py` — DefaultPerformanceCalculator (spec §19 metrics)
+  - `src/backtest/validator.py`, `src/backtest/result_store.py` — integrity checks and in-memory persistence
+  - `scripts/run_single_stock_backtest.py` — example AAPL run on mag7 fixtures
+  - `tests/backtest/` — 12 tests with synthetic price series fixtures
+
+- Decisions Made:
+  - EntryPolicy replaces factor ranking for single-stock scope — raw signal + policy only
+  - Entry evaluated on rebalance dates; exit evaluated daily when position is open
+  - Signal on T executes on T+1 — look-ahead protection per spec §7
+  - Delisting forces exit; splits adjust share count and entry price in lifecycle
+
+- What Didn't Work:
+  - none
+
+- Tasks Completed:
+  - Task 8: Backtest config + portfolio state schemas
+  - Task 9: Execution model + position sizer
+  - Task 10: SingleStockBacktestEngine + trade lifecycle
+  - Task 11: Performance statistics calculator
+  - Task 12: Backtest validator + in-memory result store
+  - Task 13: Tests + example run script

@@ -1,24 +1,27 @@
-**Current Task:** Task 7: Signal interfaces
+**Current Task:** Task 13: Tests + example run script
 Status: Complete
 
 ## What's Done
-- Schema extensions: SignalRegistration, missing_data_policy on metadata, EvaluationFrequency
-- BaseEntrySignal + EntrySignalValidator (template method, missing-data policies)
-- BaseExitSignal + ExitSignalValidator + CompositeExitSignalImpl
-- InMemory registries with enabled/disabled tracking (get() always returns)
-- Example stubs under entry_signals/examples/ and exit_signals/examples/
-- 28 new tests; full suite 42 passing
+- SingleStockBacktestConfig, PortfolioState, PendingOrder, OpenPosition
+- EntryPolicy (SignalPresent, Threshold) — no factor scoring/ranking
+- NextBarExecutionModel with slippage/commission
+- FixedDollarSizer, FullCapitalSizer
+- SingleStockBacktestEngine: T→T+1 entries/exits, splits, dividends, delisting
+- DefaultPerformanceCalculator (spec §19 metrics)
+- BacktestValidator, InMemoryResultStore
+- 12 backtest tests; example script on mag7 AAPL
 
 ## Verification (2026-05-25)
-- `ruff check src/ tests/` — pass
+- `ruff check src/ tests/ scripts/` — pass
 - `mypy src/` — pass
-- `pytest tests/` — 42 passed
+- `pytest tests/` — 54 passed
+- `python scripts/run_single_stock_backtest.py` — 6 closed trades, summary printed
 
 ## Next Steps
-1. Factor pipeline (scoring, combination, IC, performance)
-2. Real signal implementations (momentum, stop loss, etc.)
+1. Commit backtest engine work
+2. Factor pipeline (scoring, combination, IC, performance)
 
 ## Context
-- SKIP_EVALUATION missing-data policy raises ValidationError (never silent)
-- get() returns disabled signals; list_enabled() filters
-- Category folders (momentum/, stop_loss/) remain empty stubs
+- portfolio_mode=SINGLE enforced in config
+- Entry on rebalance dates; exit evaluated daily when position open
+- Example uses ExampleStubEntrySignal + ExampleStubExitSignal (63-day hold)

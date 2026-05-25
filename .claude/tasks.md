@@ -5,3 +5,9 @@
 - [x] Task 5: DefaultUniverseBuilder + liquidity + validator (optional market cap)
 - [x] Task 6: Unit tests, edge-case fixtures, verification
 - [x] Task 7: Signal interfaces (entry/exit base, validation, registry, examples, tests)
+- [x] Task 8: Backtest config + portfolio state schemas
+- [x] Task 9: Execution model + position sizer (single-stock)
+- [x] Task 10: SingleStockBacktestEngine + trade lifecycle
+- [x] Task 11: Performance statistics calculator
+- [x] Task 12: Backtest validator + in-memory result store
+- [x] Task 13: Tests + example run script
