@@ -36,6 +36,7 @@ entry_signal:
     skip_days: 21
 
 exit_signal:
-  name: example_stub_exit
+  name: momentum_exit_stack
   params:
-    max_holding_days: 63
+    stop_pct: 0.10
+    trail_pct: 0.15
