@@ -1,4 +1,4 @@
-"""12-1 momentum entry signal."""
+"""6-1 momentum entry signal."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ from entry_signals.enums import MissingDataPolicy
 from entry_signals.momentum.trailing_momentum import TrailingMomentumEntrySignal
 
 
-class Momentum12_1EntrySignal(TrailingMomentumEntrySignal):
-    """Trailing return over 252 trading days ending 21 days before evaluation."""
+class Momentum6_1EntrySignal(TrailingMomentumEntrySignal):
+    """Trailing return over 126 trading days ending 21 days before evaluation."""
 
-    DEFAULT_LOOKBACK_DAYS = 252
+    DEFAULT_LOOKBACK_DAYS = 126
     DEFAULT_SKIP_DAYS = 21
 
     def __init__(
@@ -21,8 +21,8 @@ class Momentum12_1EntrySignal(TrailingMomentumEntrySignal):
         missing_data_policy: MissingDataPolicy = MissingDataPolicy.EXCLUDE_SECURITY,
     ) -> None:
         super().__init__(
-            signal_id=SignalId("momentum_12_1"),
-            signal_name="12-1 Momentum",
+            signal_id=SignalId("momentum_6_1"),
+            signal_name="6-1 Momentum",
             signal_description=(
                 "Adjusted-price return over lookback_days ending skip_days "
                 "before the evaluation date"
