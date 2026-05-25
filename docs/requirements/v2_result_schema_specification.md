@@ -29,6 +29,7 @@ This specification defines schemas for:
 - Trades
 - Portfolio snapshots
 - Backtest summaries
+- Experiment summaries
 - Robustness scores
 
 This specification defines storage structure only.
@@ -365,12 +366,14 @@ cumulative_return
 
 ## 14. Backtest Summary Schema
 
-One record per completed backtest.
+One or more records per completed backtest, keyed by sample period.
 
 ### Schema
 
 ```text
 experiment_id
+
+sample_period
 
 total_return
 
@@ -399,9 +402,65 @@ number_of_trades
 turnover
 ```
 
+### Sample Period Values
+
+```text
+IS
+OOS
+FULL
+```
+
+### Reporting Rules
+
+- `FULL` summarizes the entire configured research window
+- `IS` and `OOS` summarize metrics computed from observations assigned by the canonical split defined in `v2_backtest_methodology_specification.md` §30
+- Implementations must persist at minimum one `FULL`, one `IS`, and one `OOS` summary for cross-sectional experiments
+
 ---
 
-## 15. Robustness Score Schema
+## 15. Experiment Summary Schema
+
+Aggregated cross-security experiment metrics, keyed by sample period.
+
+### Schema
+
+```text
+experiment_id
+
+sample_period
+
+securities_requested
+
+securities_completed
+
+securities_skipped
+
+mean_stock_return
+
+median_stock_return
+
+pct_stocks_positive
+
+best_stock_return
+
+worst_stock_return
+
+number_of_trades
+
+win_rate
+
+profit_factor
+
+average_trade
+
+total_net_pnl
+```
+
+Multiple records per experiment are permitted when reporting IS, OOS, and FULL metrics separately.
+
+---
+
+## 16. Robustness Score Schema
 
 Stores robustness evaluation outputs.
 
@@ -437,7 +496,7 @@ Definitions are provided in:
 
 ---
 
-## 16. Configuration Snapshot Schema
+## 17. Configuration Snapshot Schema
 
 Stores complete experiment configuration.
 
@@ -453,9 +512,31 @@ configuration_json
 
 Configuration must be persisted exactly as executed.
 
+The persisted `configuration_json` must include research validation settings and computed sample-split metadata:
+
+```text
+research:
+  research_mode
+  research_phase
+  sample_scope
+  is_fraction
+  calendar_start
+
+sample_split:
+  method
+  basis
+  is_fraction
+  calendar_start
+  calendar_end
+  split_date
+  is_trading_days
+  oos_trading_days
+  total_trading_days
+```
+
 ---
 
-## 17. Version Metadata Schema
+## 18. Version Metadata Schema
 
 Stores implementation versions used during execution.
 
@@ -479,7 +560,7 @@ backtest_version
 
 ---
 
-## 18. File Organization
+## 19. File Organization
 
 Recommended structure:
 
@@ -511,7 +592,7 @@ Implementations may use alternative storage systems if schema compatibility is m
 
 ---
 
-## 19. Serialization Requirements
+## 20. Serialization Requirements
 
 Supported formats:
 
@@ -535,7 +616,7 @@ All schemas must preserve:
 
 ---
 
-## 20. Validation Requirements
+## 21. Validation Requirements
 
 Before persistence:
 
@@ -567,7 +648,7 @@ Validation failures must halt persistence.
 
 ---
 
-## 21. Experiment Audit Requirements
+## 22. Experiment Audit Requirements
 
 Every experiment must be fully reconstructable.
 
@@ -589,9 +670,17 @@ framework_version
 
 No result may exist without audit metadata.
 
+Experiment reports should include, when sample-split analysis is enabled:
+
+```text
+sample_split
+sample_metrics
+is_to_oos_degradation
+```
+
 ---
 
-## 22. Integration Requirements
+## 23. Integration Requirements
 
 Consumes outputs from:
 
@@ -606,7 +695,7 @@ Acts as the persistence layer for the entire research framework.
 
 ---
 
-## 23. Compliance Requirements
+## 24. Compliance Requirements
 
 All implementations must guarantee:
 

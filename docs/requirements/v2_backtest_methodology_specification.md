@@ -557,3 +557,64 @@ All implementations must guarantee:
 - Complete auditability
 
 Any implementation violating these requirements is non-compliant.
+
+---
+
+## 30. Validation Framework
+
+Validation exists to reduce overfitting risk and evaluate factor generalization.
+
+### 30.1 Research Calendar
+
+- The Data Layer shall provide point-in-time data from 2005-01-01 through the most recently completed calendar year.
+- Demo and test configurations may use shorter windows when `research_mode` is explicitly set to `DEMO` or `TEST`.
+
+### 30.2 Fixed Chronological Split
+
+All research shall use a fixed chronological split computed on **trading days** within the research window:
+
+- **In-Sample (IS):** oldest 80% of available trading days
+- **Out-of-Sample (OOS):** most recent 20% of available trading days
+- **Split date:** first OOS trading day
+- IS and OOS periods must not overlap
+
+### 30.3 Research Phases and Access Control
+
+| Phase | Allowed sample scope | Rule |
+|--------|---------------------|------|
+| DISCOVERY | IS only | Used for factor discovery, selection, and parameter tuning |
+| VALIDATION | IS, OOS, or FULL | OOS used exclusively for validation reporting |
+
+Implementations must **halt execution** when:
+
+- `DISCOVERY` is combined with `OOS` or `FULL` sample scope
+- A discovery run requests dates on or after the OOS split date
+
+OOS data shall be used exclusively for validation.
+
+### 30.4 Execution and Metric Reporting
+
+Backtests and analytics shall use a **single full execution** over the configured window.
+
+Performance metrics must be computed separately for IS and OOS by filtering outputs post-hoc:
+
+| Output type | Period assignment rule |
+|-------------|------------------------|
+| Trades | `exit_date` |
+| Equity curve points | `date` |
+| Daily IC observations | `evaluation_date` |
+| Forward returns | `evaluation_date` |
+
+All performance metrics must be reported separately for IS and OOS periods.
+
+Persisted summaries must include `sample_period` with values `IS`, `OOS`, or `FULL`.
+
+Split metadata must be recorded in the configuration snapshot for auditability.
+
+### 30.5 Overfitting Evidence
+
+Significant performance degradation from IS to OOS shall be considered evidence of potential overfitting.
+
+Report IS→OOS deltas for key metrics (for example: mean return, Sharpe ratio, mean IC, hit rate).
+
+Degradation flags are informational unless explicit policy thresholds are configured.

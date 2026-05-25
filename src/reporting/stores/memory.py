@@ -41,8 +41,10 @@ class InMemoryResultStore:
         self.snapshots: list[PortfolioSnapshotRecord] = []
         self.equity_curve: list[EquityCurveRecord] = []
         self.summary: BacktestSummaryRecord | None = None
+        self.backtest_summaries: list[BacktestSummaryRecord] = []
         self.stock_summaries: list[StockSummaryRecord] = []
         self.experiment_summary: ExperimentSummaryRecord | None = None
+        self.experiment_summaries: list[ExperimentSummaryRecord] = []
         self.robustness_score: RobustnessScoreRecord | None = None
         self.configuration_snapshot: ConfigurationSnapshotRecord | None = None
         self.version_metadata: VersionMetadataRecord | None = None
@@ -92,10 +94,18 @@ class InMemoryResultStore:
         self.equity_curve.extend(rows)
 
     def save_backtest_summary(self, summary: BacktestSummaryRecord) -> None:
+        self.save_backtest_summaries([summary])
+
+    def save_backtest_summaries(self, summaries: Sequence[BacktestSummaryRecord]) -> None:
         self._require_experiment()
-        if self.summary is not None:
-            raise ValidationError("Backtest summary already persisted")
-        self.summary = summary
+        if self.backtest_summaries:
+            raise ValidationError("Backtest summaries already persisted")
+        self.backtest_summaries.extend(summaries)
+        full = next(
+            (row for row in summaries if row.sample_period.value == "FULL"),
+            summaries[0] if summaries else None,
+        )
+        self.summary = full
 
     def save_stock_summaries(self, rows: Sequence[StockSummaryRecord]) -> None:
         self._require_experiment()
@@ -104,10 +114,18 @@ class InMemoryResultStore:
         self.stock_summaries.extend(rows)
 
     def save_experiment_summary(self, summary: ExperimentSummaryRecord) -> None:
+        self.save_experiment_summaries([summary])
+
+    def save_experiment_summaries(self, summaries: Sequence[ExperimentSummaryRecord]) -> None:
         self._require_experiment()
-        if self.experiment_summary is not None:
-            raise ValidationError("Experiment summary already persisted")
-        self.experiment_summary = summary
+        if self.experiment_summaries:
+            raise ValidationError("Experiment summaries already persisted")
+        self.experiment_summaries.extend(summaries)
+        full = next(
+            (row for row in summaries if row.sample_period.value == "FULL"),
+            summaries[0] if summaries else None,
+        )
+        self.experiment_summary = full
 
     def save_robustness_score(self, score: RobustnessScoreRecord) -> None:
         self._require_experiment()

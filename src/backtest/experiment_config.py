@@ -11,6 +11,7 @@ from backtest.config import SingleStockBacktestConfig
 from config.models import BacktestSettings
 from core.enums import PortfolioMode
 from core.types import SecurityId, Ticker
+from research.config import ResearchSettings
 
 
 class ExperimentSecurity(BaseModel):
@@ -33,6 +34,7 @@ class SingleFactorExperimentConfig(BacktestSettings):
     fixed_dollar_amount: Decimal | None = None
     entry_signal: SignalConfig
     exit_signal: SignalConfig
+    research: ResearchSettings = Field(default_factory=ResearchSettings)
 
     @model_validator(mode="after")
     def validate_experiment_settings(self) -> SingleFactorExperimentConfig:
@@ -42,6 +44,14 @@ class SingleFactorExperimentConfig(BacktestSettings):
             raise ValueError("end_date must be on or after start_date")
         if not self.securities:
             raise ValueError("At least one security is required")
+
+        from research.validator import validate_research_settings
+
+        validate_research_settings(
+            self.research,
+            start_date=self.start_date,
+            end_date=self.end_date,
+        )
         return self
 
     def to_stock_config(self, security: ExperimentSecurity) -> SingleStockBacktestConfig:

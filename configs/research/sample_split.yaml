@@ -1,0 +1,7 @@
+"""Default research validation settings."""
+
+research_mode: DEMO
+research_phase: VALIDATION
+sample_scope: FULL
+is_fraction: 0.80
+calendar_start: 2005-01-01

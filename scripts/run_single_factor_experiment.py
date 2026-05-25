@@ -62,9 +62,22 @@ def main() -> None:
     print(f"Experiment: {result.experiment_id}")
     print(f"Securities completed: {summary.securities_completed}/{summary.securities_requested}")
     print(f"Securities skipped: {summary.securities_skipped}")
-    print(f"Mean stock return: {summary.mean_stock_return}")
-    print(f"Pooled win rate: {summary.win_rate}")
-    print(f"Total trades: {summary.number_of_trades}")
+    print(f"Mean stock return (FULL): {summary.mean_stock_return}")
+    print(f"Pooled win rate (FULL): {summary.win_rate}")
+    print(f"Total trades (FULL): {summary.number_of_trades}")
+    if result.sample_summaries:
+        for sample_summary in result.sample_summaries:
+            print(
+                f"[{sample_summary.sample_period.value}] "
+                f"mean return={sample_summary.mean_stock_return} "
+                f"trades={sample_summary.number_of_trades} "
+                f"win_rate={sample_summary.win_rate}"
+            )
+    if result.degradation is not None:
+        print(f"IS→OOS return delta: {result.degradation.is_to_oos_mean_return_delta}")
+        print(f"Overfitting warning: {result.degradation.overfitting_warning}")
+    if result.sample_split is not None:
+        print(f"Split date: {result.sample_split.split_date}")
     if result.report_path is not None:
         print(f"Report: {result.report_path}")
     print(f"Results dir: {args.output_dir / str(result.experiment_id)}")

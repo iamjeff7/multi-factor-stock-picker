@@ -182,3 +182,25 @@
 
 - Tasks Completed:
   - Task 19–22: Experiment runner, aggregators, report, tests
+
+## Session 7 — 2026-05-25 21:59:03
+
+- Goal: Build factor evaluation pipeline and canonical IS/OOS validation framework
+
+- What I Built:
+  - `src/factors/scoring/`, `combination/`, `ic/` — factor scoring, combination, and IC modules
+  - `src/evaluation/robustness/`, `exit/robustness/` — entry and exit robustness scorers
+  - `src/research/` — trading-day 80/20 IS/OOS split, enforcement, and degradation metrics
+  - `src/backtest/experiment_runner.py` — dual IS/OOS experiment summaries and reporting
+  - `docs/requirements/` — updated specs for validation framework, IC, robustness, and result schemas
+
+- Decisions Made:
+  - One full backtest run with post-hoc IS/OOS metric split — trades by exit_date, IC by evaluation_date
+  - DISCOVERY phase hard-errors on OOS access; demo configs use one-year Mag7 window
+
+- What Didn't Work:
+  - none
+
+- Tasks Completed:
+  - Factor pipeline (scoring, combination, IC, robustness)
+  - IS/OOS validation framework and spec alignment

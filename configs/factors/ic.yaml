@@ -1,0 +1,10 @@
+correlation_method: SPEARMAN
+
+minimum_security_count: 30
+
+horizons:
+  - 5
+  - 21
+  - 63
+  - 126
+  - 252

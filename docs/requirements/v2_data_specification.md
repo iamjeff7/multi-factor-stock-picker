@@ -310,6 +310,22 @@ Checks:
 
 ---
 
+### 9.5 Research Calendar Validation
+
+Production research datasets must support the canonical research calendar defined in `v2_backtest_methodology_specification.md` §30.
+
+Checks:
+
+- Earliest available history on or before 2005-01-01
+- Latest available history through the most recently completed calendar year
+- Sufficient trading-day coverage to compute an 80/20 in-sample / out-of-sample split
+
+Demo and test datasets may use shorter windows when explicitly configured with `research_mode: DEMO` or `research_mode: TEST`.
+
+Validation failures in production mode must halt research execution.
+
+---
+
 ## 10. Survivorship Bias Requirements
 
 Historical datasets must include:
@@ -431,7 +447,28 @@ These outputs become inputs to:
 
 ---
 
-## 17. Compliance Requirements
+## 17. Research Calendar Requirements
+
+The data layer must provide point-in-time history covering the production research window:
+
+```text
+start: 2005-01-01
+end:   December 31 of the most recently completed calendar year
+```
+
+Requirements:
+
+- History must be available on a trading-day basis for split computation
+- Delisted securities must remain available across the full window
+- Dataset versioning must record the effective calendar bounds
+
+Shorter windows are permitted only for demo or test execution with explicit configuration override.
+
+Cross-reference: `v2_backtest_methodology_specification.md` §30 Validation Framework.
+
+---
+
+## 18. Compliance Requirements
 
 All implementations must guarantee:
 

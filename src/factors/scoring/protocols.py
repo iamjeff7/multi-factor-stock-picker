@@ -6,7 +6,9 @@ from collections.abc import Sequence
 from datetime import date
 from typing import Protocol
 
+from factors.scoring.config import FactorScoringConfig
 from schemas.entry import EntrySignalResult
+from schemas.enums import SignalDirection
 from schemas.factors import FactorScore
 
 
@@ -17,4 +19,7 @@ class FactorScorer(Protocol):
         self,
         raw_signals: Sequence[EntrySignalResult],
         evaluation_date: date,
+        *,
+        direction: SignalDirection,
+        config: FactorScoringConfig | None = None,
     ) -> Sequence[FactorScore]: ...

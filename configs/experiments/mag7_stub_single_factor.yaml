@@ -1,12 +1,17 @@
 experiment_name: mag7_stub_single_factor
 start_date: 2023-01-03
-end_date: 2024-06-28
+end_date: 2023-12-29
 initial_capital: 100000
 slippage_pct: 0.001
 commission_pct: 0.0
 rebalance_frequency: MONTHLY
 portfolio_mode: SINGLE
 position_size_method: EQUAL_WEIGHT
+
+research:
+  research_mode: DEMO
+  research_phase: VALIDATION
+  sample_scope: FULL
 
 securities:
   - security_id: SEC_AAPL

@@ -79,16 +79,24 @@ class ValidatingResultStore:
         self._store.save_equity_curve(rows)
 
     def save_backtest_summary(self, summary: BacktestSummaryRecord) -> None:
-        self._validator.validate_backtest_summary_or_raise(summary)
-        self._store.save_backtest_summary(summary)
+        self.save_backtest_summaries([summary])
+
+    def save_backtest_summaries(self, summaries: Sequence[BacktestSummaryRecord]) -> None:
+        for row in summaries:
+            self._validator.validate_backtest_summary_or_raise(row)
+        self._store.save_backtest_summaries(summaries)
 
     def save_stock_summaries(self, rows: Sequence[StockSummaryRecord]) -> None:
         self._validator.validate_stock_summaries_or_raise(rows)
         self._store.save_stock_summaries(rows)
 
     def save_experiment_summary(self, summary: ExperimentSummaryRecord) -> None:
-        self._validator.validate_experiment_summary_or_raise(summary)
-        self._store.save_experiment_summary(summary)
+        self.save_experiment_summaries([summary])
+
+    def save_experiment_summaries(self, summaries: Sequence[ExperimentSummaryRecord]) -> None:
+        for row in summaries:
+            self._validator.validate_experiment_summary_or_raise(row)
+        self._store.save_experiment_summaries(summaries)
 
     def save_robustness_score(self, score: RobustnessScoreRecord) -> None:
         self._validator.validate_robustness_score_or_raise(score)

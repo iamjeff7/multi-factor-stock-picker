@@ -7,7 +7,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
-from core.enums import ExperimentStatus, ExperimentType, PositionStatus
+from core.enums import ExperimentStatus, ExperimentType, PositionStatus, SamplePeriod
 from core.types import (
     ConfigurationHash,
     DataVersion,
@@ -134,6 +134,7 @@ class EquityCurveRecord(BaseModel):
 
 class BacktestSummaryRecord(BaseModel):
     experiment_id: ExperimentId
+    sample_period: SamplePeriod = SamplePeriod.FULL
     total_return: Decimal
     annualized_return: Decimal | None = None
     cagr: Decimal | None = None
@@ -208,6 +209,7 @@ class ExperimentReportManifest(BaseModel):
 
 class ExperimentSummaryRecord(BaseModel):
     experiment_id: ExperimentId
+    sample_period: SamplePeriod = SamplePeriod.FULL
     securities_requested: int
     securities_completed: int
     securities_skipped: int

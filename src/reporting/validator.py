@@ -69,12 +69,34 @@ class ResultSchemaValidator:
         issues = self._duplicate_key_issues(rows, FACTOR_SCORE_PK, "factor_score")
         for row in rows:
             issues.extend(self._finite_decimal_issues(row.factor_score, "factor_score"))
+            if row.factor_score < Decimal("0") or row.factor_score > Decimal("1"):
+                issues.append(
+                    ValidationIssue(
+                        check_name="factor_score_out_of_range",
+                        message=(
+                            f"factor_score {row.factor_score} outside [0, 1] "
+                            f"for {row.security_id}"
+                        ),
+                        security_id=row.security_id,
+                    )
+                )
         return self._report(issues)
 
     def validate_composite_scores(self, rows: Sequence[CompositeScoreRecord]) -> ValidationReport:
         issues = self._duplicate_key_issues(rows, COMPOSITE_SCORE_PK, "composite_score")
         for row in rows:
             issues.extend(self._finite_decimal_issues(row.composite_score, "composite_score"))
+            if row.composite_score < Decimal("0") or row.composite_score > Decimal("1"):
+                issues.append(
+                    ValidationIssue(
+                        check_name="composite_score_out_of_range",
+                        message=(
+                            f"composite_score {row.composite_score} outside [0, 1] "
+                            f"for {row.security_id}"
+                        ),
+                        security_id=row.security_id,
+                    )
+                )
         return self._report(issues)
 
     def validate_portfolio_selections(
@@ -196,7 +218,24 @@ class ResultSchemaValidator:
         return self._report(issues)
 
     def validate_robustness_score(self, score: RobustnessScoreRecord) -> ValidationReport:
-        return self._report([])
+        issues: list[ValidationIssue] = []
+        for field_name, value in (
+            ("robustness_score", score.robustness_score),
+            ("stability_score", score.stability_score),
+            ("consistency_score", score.consistency_score),
+            ("sample_size_score", score.sample_size_score),
+        ):
+            if value is None:
+                continue
+            issues.extend(self._finite_decimal_issues(value, field_name))
+            if value < Decimal("0") or value > Decimal("1"):
+                issues.append(
+                    ValidationIssue(
+                        check_name="robustness_score_out_of_range",
+                        message=f"{field_name} {value} outside [0, 1]",
+                    )
+                )
+        return self._report(issues)
 
     def validate_configuration_snapshot(
         self,

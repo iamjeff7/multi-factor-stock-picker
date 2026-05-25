@@ -1,6 +1,31 @@
 """Factor scoring, combination, and analysis."""
 
-from factors.combination.protocols import FactorCombiner
-from factors.scoring.protocols import FactorScorer
+from factors.combination import (
+    FactorCombiner,
+    FactorCombinationConfig,
+    WeightedMeanFactorCombiner,
+)
+from factors.ic import (
+    ForwardReturnCalculator,
+    ICConfig,
+    InformationCoefficientCalculator,
+    SpearmanICCalculator,
+)
+from factors.scoring import (
+    FactorScorer,
+    FactorScoringConfig,
+    PercentileRankFactorScorer,
+)
 
-__all__ = ["FactorCombiner", "FactorScorer"]
+__all__ = [
+    "FactorCombiner",
+    "FactorCombinationConfig",
+    "FactorScorer",
+    "FactorScoringConfig",
+    "ForwardReturnCalculator",
+    "ICConfig",
+    "InformationCoefficientCalculator",
+    "PercentileRankFactorScorer",
+    "SpearmanICCalculator",
+    "WeightedMeanFactorCombiner",
+]

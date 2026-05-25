@@ -69,3 +69,26 @@ class RebalanceFrequency(StrEnum):
 class OrderSide(StrEnum):
     BUY = "BUY"
     SELL = "SELL"
+
+
+class SamplePeriod(StrEnum):
+    IN_SAMPLE = "IS"
+    OUT_OF_SAMPLE = "OOS"
+    FULL = "FULL"
+
+
+class ResearchMode(StrEnum):
+    PRODUCTION = "PRODUCTION"
+    DEMO = "DEMO"
+    TEST = "TEST"
+
+
+class ResearchPhase(StrEnum):
+    DISCOVERY = "DISCOVERY"
+    VALIDATION = "VALIDATION"
+
+
+class SampleScope(StrEnum):
+    IN_SAMPLE = "IS"
+    OUT_OF_SAMPLE = "OOS"
+    FULL = "FULL"

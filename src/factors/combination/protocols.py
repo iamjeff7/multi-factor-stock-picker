@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from datetime import date
 from typing import Protocol
 
+from factors.combination.config import FactorCombinationConfig
 from schemas.factors import CompositeScore, FactorScore
 
 
@@ -16,4 +17,6 @@ class FactorCombiner(Protocol):
         self,
         factor_scores: Sequence[FactorScore],
         evaluation_date: date,
+        *,
+        config: FactorCombinationConfig | None = None,
     ) -> Sequence[CompositeScore]: ...

@@ -86,7 +86,12 @@ class ParquetResultStore:
         self._write_rows(rows, ResultLayout.EQUITY_CURVE)
 
     def save_backtest_summary(self, summary: BacktestSummaryRecord) -> None:
-        self._write_single(summary, ResultLayout.BACKTEST_SUMMARY)
+        self.save_backtest_summaries([summary])
+
+    def save_backtest_summaries(self, summaries: Sequence[BacktestSummaryRecord]) -> None:
+        if not summaries:
+            return
+        self._write_rows(summaries, ResultLayout.BACKTEST_SUMMARY)
 
     def save_stock_summaries(self, rows: Sequence[StockSummaryRecord]) -> None:
         if not rows:
@@ -94,7 +99,12 @@ class ParquetResultStore:
         self._write_rows(rows, ResultLayout.STOCK_SUMMARIES)
 
     def save_experiment_summary(self, summary: ExperimentSummaryRecord) -> None:
-        self._write_single(summary, ResultLayout.EXPERIMENT_SUMMARY)
+        self.save_experiment_summaries([summary])
+
+    def save_experiment_summaries(self, summaries: Sequence[ExperimentSummaryRecord]) -> None:
+        if not summaries:
+            return
+        self._write_rows(summaries, ResultLayout.EXPERIMENT_SUMMARY)
 
     def save_robustness_score(self, score: RobustnessScoreRecord) -> None:
         self._write_single(score, ResultLayout.ROBUSTNESS_SCORE)
@@ -117,10 +127,16 @@ class ParquetResultStore:
         return read_record(path, ExperimentMetadata)
 
     def load_experiment_summary(self, experiment_id: str) -> ExperimentSummaryRecord | None:
-        path = self.experiment_path(experiment_id) / ResultLayout.EXPERIMENT_SUMMARY
-        if not path.exists():
+        summaries = self.load_experiment_summaries(experiment_id)
+        if not summaries:
             return None
-        return read_record(path, ExperimentSummaryRecord)
+        for summary in summaries:
+            if summary.sample_period.value == "FULL":
+                return summary
+        return summaries[0]
+
+    def load_experiment_summaries(self, experiment_id: str) -> list[ExperimentSummaryRecord]:
+        return self._read_rows(experiment_id, ResultLayout.EXPERIMENT_SUMMARY, ExperimentSummaryRecord)
 
     def load_trades(self, experiment_id: str) -> list[TradeRecord]:
         return self._read_rows(experiment_id, ResultLayout.TRADES_FILE, TradeRecord)
@@ -129,10 +145,16 @@ class ParquetResultStore:
         return self._read_rows(experiment_id, ResultLayout.STOCK_SUMMARIES, StockSummaryRecord)
 
     def load_backtest_summary(self, experiment_id: str) -> BacktestSummaryRecord | None:
-        path = self.experiment_path(experiment_id) / ResultLayout.BACKTEST_SUMMARY
-        if not path.exists():
+        summaries = self.load_backtest_summaries(experiment_id)
+        if not summaries:
             return None
-        return read_record(path, BacktestSummaryRecord)
+        for summary in summaries:
+            if summary.sample_period.value == "FULL":
+                return summary
+        return summaries[0]
+
+    def load_backtest_summaries(self, experiment_id: str) -> list[BacktestSummaryRecord]:
+        return self._read_rows(experiment_id, ResultLayout.BACKTEST_SUMMARY, BacktestSummaryRecord)
 
     def load_report_manifest(self, experiment_id: str) -> ExperimentReportManifest | None:
         artifacts = self._read_rows(

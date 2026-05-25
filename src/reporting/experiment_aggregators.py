@@ -6,7 +6,8 @@ import statistics
 from collections.abc import Sequence
 from decimal import Decimal
 
-from core.types import ExperimentId
+from core.enums import SamplePeriod
+from core.types import ExperimentId, SecurityId
 from schemas.results import ExperimentSummaryRecord, TradeRecord
 
 
@@ -54,6 +55,26 @@ def aggregate_stock_return_stats(
     return mean_return, median_return, pct_positive, sorted_returns[-1], sorted_returns[0]
 
 
+def aggregate_stock_returns_from_trades(
+    trades: Sequence[TradeRecord],
+    *,
+    initial_capital: Decimal,
+    security_ids: Sequence[SecurityId],
+) -> list[Decimal]:
+    if initial_capital <= Decimal("0"):
+        return []
+
+    grouped: dict[str, Decimal] = {str(security_id): Decimal("0") for security_id in security_ids}
+    for trade in trades:
+        if trade.exit_date is None or trade.net_pnl is None:
+            continue
+        grouped[str(trade.security_id)] = grouped.get(str(trade.security_id), Decimal("0")) + (
+            trade.net_pnl
+        )
+
+    return [pnl / initial_capital for pnl in grouped.values()]
+
+
 def aggregate_experiment_summary(
     experiment_id: ExperimentId,
     *,
@@ -62,6 +83,7 @@ def aggregate_experiment_summary(
     securities_skipped: int,
     stock_returns: Sequence[Decimal],
     trades: Sequence[TradeRecord],
+    sample_period: SamplePeriod = SamplePeriod.FULL,
 ) -> ExperimentSummaryRecord:
     number_of_trades, win_rate, profit_factor, average_trade, total_net_pnl = (
         aggregate_trade_metrics(trades)
@@ -72,6 +94,7 @@ def aggregate_experiment_summary(
 
     return ExperimentSummaryRecord(
         experiment_id=experiment_id,
+        sample_period=sample_period,
         securities_requested=securities_requested,
         securities_completed=securities_completed,
         securities_skipped=securities_skipped,

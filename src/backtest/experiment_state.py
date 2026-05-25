@@ -8,6 +8,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from core.types import ExperimentId, SecurityId, Ticker
+from research.config import SampleSplitMetadata
+from research.degradation import SampleDegradationMetrics
 from schemas.results import (
     ExperimentSummaryRecord,
     StockSummaryRecord,
@@ -31,6 +33,9 @@ class ExperimentRunResult(BaseModel):
     trade_records: list[TradeRecord] = Field(default_factory=list)
     stock_summaries: list[StockSummaryRecord] = Field(default_factory=list)
     experiment_summary: ExperimentSummaryRecord
+    sample_summaries: list[ExperimentSummaryRecord] = Field(default_factory=list)
+    sample_split: SampleSplitMetadata | None = None
+    degradation: SampleDegradationMetrics | None = None
     report_path: str | None = None
 
     @property

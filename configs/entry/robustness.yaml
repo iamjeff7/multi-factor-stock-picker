@@ -1,0 +1,15 @@
+component_weights:
+  ic_stability: 0.25
+  return_stability: 0.20
+  regime_stability: 0.15
+  parameter_stability: 0.15
+  rank_stability: 0.10
+  breadth_stability: 0.10
+  sample_stability: 0.05
+
+classification_thresholds:
+  exceptional: 0.90
+  strong: 0.80
+  good: 0.70
+  acceptable: 0.60
+  weak: 0.50

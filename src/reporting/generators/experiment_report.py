@@ -45,7 +45,7 @@ def build_experiment_report_payload(
     result: ExperimentRunResult,
     experiment_name: str,
 ) -> dict[str, object]:
-    return {
+    payload: dict[str, object] = {
         "experiment_id": str(result.experiment_id),
         "experiment_name": experiment_name,
         "generated_at": datetime.now(tz=UTC).isoformat(),
@@ -61,6 +61,16 @@ def build_experiment_report_payload(
             ResultLayout.EXPERIMENT_REPORT,
         ],
     }
+    if result.sample_split is not None:
+        payload["sample_split"] = result.sample_split.model_dump(mode="json")
+    if result.sample_summaries:
+        payload["sample_metrics"] = {
+            summary.sample_period.value: _experiment_metrics(summary)
+            for summary in result.sample_summaries
+        }
+    if result.degradation is not None:
+        payload["is_to_oos_degradation"] = result.degradation.model_dump(mode="json")
+    return payload
 
 
 def _trade_metrics(trades: list[TradeRecord]) -> dict[str, object]:

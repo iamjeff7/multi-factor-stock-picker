@@ -1,0 +1,12 @@
+combination_method: WEIGHTED_MEAN
+
+weighting_method: EQUAL_WEIGHT
+
+factor_weights:
+  momentum_12m: 1.0
+  quality_roe: 1.0
+  value_pe: 1.0
+
+missing_factor_policy: IGNORE_MISSING_FACTOR
+
+minimum_factor_coverage_pct: 0.50

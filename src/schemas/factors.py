@@ -15,8 +15,9 @@ class FactorScore(BaseModel):
     security_id: SecurityId
     ticker: Ticker
     signal_id: SignalId
+    raw_signal_value: Decimal | None = None
     factor_score: Decimal
-    factor_rank: int | None = None
+    factor_rank: Decimal | None = None
 
 
 class CompositeScore(BaseModel):
@@ -24,4 +25,5 @@ class CompositeScore(BaseModel):
     security_id: SecurityId
     ticker: Ticker
     composite_score: Decimal
-    composite_rank: int | None = None
+    composite_rank: Decimal | None = None
+    factor_contributions_json: dict[str, Decimal] | None = None

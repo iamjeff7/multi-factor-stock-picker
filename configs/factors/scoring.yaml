@@ -1,0 +1,11 @@
+scoring_method: PERCENTILE_RANK
+
+score_range:
+  min: 0.0
+  max: 1.0
+
+tie_method: AVERAGE_RANK
+
+missing_data_policy: EXCLUDE_SECURITY
+
+minimum_security_count: 30

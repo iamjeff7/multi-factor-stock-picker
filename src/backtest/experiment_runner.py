@@ -14,19 +14,30 @@ from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy
 from backtest.experiment_config import SingleFactorExperimentConfig
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
 from backtest.statistics import DefaultPerformanceCalculator
-from core.enums import ExperimentStatus, ExperimentType
+from core.enums import ExperimentStatus, ExperimentType, SamplePeriod
 from core.exceptions import ValidationError
 from core.types import ConfigurationHash, DataVersion, ExperimentId, UniverseVersion
 from data.protocols import DataAccess
 from entry_signals.protocols import EntrySignal
 from exit_signals.protocols import ExitSignal
 from reporting.aggregators import aggregate_stock_summaries
-from reporting.experiment_aggregators import aggregate_experiment_summary
+from reporting.experiment_aggregators import (
+    aggregate_experiment_summary,
+    aggregate_stock_returns_from_trades,
+)
 from reporting.generators.experiment_report import ExperimentReportGenerator
 from reporting.manifest import build_backtest_report_manifest
 from reporting.protocols import ResultStore
 from reporting.stores import ParquetResultStore, ValidatingResultStore
 from reporting.stores.validating import ValidatingResultStore as ValidatingStore
+from research.degradation import compute_degradation_metrics
+from research.sample_split import (
+    collect_trading_days_from_data,
+    compute_sample_split,
+    filter_trades_by_period,
+    split_to_metadata,
+)
+from research.validator import validate_research_settings
 from schemas.backtest import Trade
 from schemas.results import (
     BacktestSummaryRecord,
@@ -66,6 +77,26 @@ class SingleFactorExperimentRunner:
         policy = entry_policy or SignalPresentEntryPolicy()
         parent_experiment_id = experiment_id or ExperimentId(f"exp_{uuid.uuid4().hex[:12]}")
         store = result_store or self._build_result_store(output_dir)
+
+        trading_days = collect_trading_days_from_data(
+            data_access,
+            [security.security_id for security in config.securities],
+            calendar_start=config.start_date,
+            calendar_end=config.end_date,
+        )
+        sample_split = compute_sample_split(
+            trading_days,
+            calendar_start=config.start_date,
+            calendar_end=config.end_date,
+            is_fraction=config.research.is_fraction,
+        )
+        validate_research_settings(
+            config.research,
+            start_date=config.start_date,
+            end_date=config.end_date,
+            split=sample_split,
+        )
+        split_metadata = split_to_metadata(sample_split)
 
         stock_results: list[StockRunResult] = []
         all_trades: list[TradeRecord] = []
@@ -130,7 +161,50 @@ class SingleFactorExperimentRunner:
             securities_skipped=sum(1 for row in stock_results if row.status == "skipped"),
             stock_returns=stock_returns,
             trades=all_trades,
+            sample_period=SamplePeriod.FULL,
         )
+
+        completed_security_ids = [
+            result.security_id for result in stock_results if result.status == "completed"
+        ]
+        initial_capital = Decimal(str(config.initial_capital))
+        is_trades = filter_trades_by_period(
+            all_trades,
+            split=sample_split,
+            sample_period=SamplePeriod.IN_SAMPLE,
+        )
+        oos_trades = filter_trades_by_period(
+            all_trades,
+            split=sample_split,
+            sample_period=SamplePeriod.OUT_OF_SAMPLE,
+        )
+        is_summary = aggregate_experiment_summary(
+            parent_experiment_id,
+            securities_requested=len(config.securities),
+            securities_completed=sum(1 for row in stock_results if row.status == "completed"),
+            securities_skipped=sum(1 for row in stock_results if row.status == "skipped"),
+            stock_returns=aggregate_stock_returns_from_trades(
+                is_trades,
+                initial_capital=initial_capital,
+                security_ids=completed_security_ids,
+            ),
+            trades=is_trades,
+            sample_period=SamplePeriod.IN_SAMPLE,
+        )
+        oos_summary = aggregate_experiment_summary(
+            parent_experiment_id,
+            securities_requested=len(config.securities),
+            securities_completed=sum(1 for row in stock_results if row.status == "completed"),
+            securities_skipped=sum(1 for row in stock_results if row.status == "skipped"),
+            stock_returns=aggregate_stock_returns_from_trades(
+                oos_trades,
+                initial_capital=initial_capital,
+                security_ids=completed_security_ids,
+            ),
+            trades=oos_trades,
+            sample_period=SamplePeriod.OUT_OF_SAMPLE,
+        )
+        degradation = compute_degradation_metrics(is_summary, oos_summary)
 
         experiment_result = ExperimentRunResult(
             experiment_id=parent_experiment_id,
@@ -138,6 +212,9 @@ class SingleFactorExperimentRunner:
             trade_records=all_trades,
             stock_summaries=stock_summaries,
             experiment_summary=experiment_summary,
+            sample_summaries=[is_summary, oos_summary],
+            sample_split=split_metadata,
+            degradation=degradation,
         )
 
         if store is not None:
@@ -182,7 +259,12 @@ class SingleFactorExperimentRunner:
             ConfigurationSnapshotRecord(
                 experiment_id=result.experiment_id,
                 configuration_hash=config_hash,
-                configuration_json=config.model_dump(mode="json"),
+                configuration_json={
+                    **config.model_dump(mode="json"),
+                    "sample_split": result.sample_split.model_dump(mode="json")
+                    if result.sample_split is not None
+                    else None,
+                },
             )
         )
         store.save_version_metadata(
@@ -209,16 +291,22 @@ class SingleFactorExperimentRunner:
                     result.stock_summaries,
                 )
             store.save_stock_summaries(result.stock_summaries)
-        store.save_experiment_summary(result.experiment_summary)
-        store.save_backtest_summary(
-            BacktestSummaryRecord(
-                experiment_id=result.experiment_id,
-                total_return=result.experiment_summary.mean_stock_return or Decimal("0"),
-                win_rate=result.experiment_summary.win_rate,
-                profit_factor=result.experiment_summary.profit_factor,
-                average_trade=result.experiment_summary.average_trade,
-                number_of_trades=result.experiment_summary.number_of_trades,
-            )
+        store.save_experiment_summaries(
+            [result.experiment_summary, *result.sample_summaries]
+        )
+        store.save_backtest_summaries(
+            [
+                BacktestSummaryRecord(
+                    experiment_id=result.experiment_id,
+                    sample_period=summary.sample_period,
+                    total_return=summary.mean_stock_return or Decimal("0"),
+                    win_rate=summary.win_rate,
+                    profit_factor=summary.profit_factor,
+                    average_trade=summary.average_trade,
+                    number_of_trades=summary.number_of_trades,
+                )
+                for summary in [result.experiment_summary, *result.sample_summaries]
+            ]
         )
 
         report_path: Path | None = None
