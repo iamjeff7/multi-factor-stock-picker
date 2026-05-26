@@ -231,3 +231,30 @@
   - Task 29: README experiment runs + report sections
   - Task 30: Factor combination in multi-factor experiments
   - Task 31: Housekeeping (DEVLOG, pyproject research package, CI)
+
+## Session 11 — 2026-05-26 19:28:47
+
+- Goal: Add unified entry, exit, and entry+exit experiment framework with segmented factor rankings and VectorBT combined runs
+
+- What I Built:
+  - `src/experiments/` — config, data presets, metrics, segments, ranking, trade simulator, entry/exit/combined runners
+  - `scripts/run_experiment.py` — single CLI for entry, exit, and entry_and_exit modes
+  - `configs/experiments/` — entry_demo, exit_demo, entry_extended_demo, entry_best_within_demo, exit_bottom_entry_demo, entry_and_exit_demo
+  - `tests/experiments/` — metrics, ranking, data presets, runner integration, combined signal tests
+  - `README.md` — run commands for all experiment modes including best-within-period, bottom entry, and entry+exit
+  - `pyproject.toml` — experiments package and optional `[research]` vectorbt deps
+
+- Decisions Made:
+  - Demo preset uses most recent complete calendar trading year, not rolling 252 days
+  - Rankings use 95th-percentile voting per segment with trades_per_trading_days and trades_per_month metrics
+  - Combined runner reads prior ranking JSON; signal_catalog accepts SignalConfig or SignalVariant for entry+exit builds
+
+- What Didn't Work:
+  - entry_and_exit failed with `'SignalConfig' object has no attribute 'config'` — fixed by accepting SignalConfig in signal_catalog builders
+  - pytest collection failed when `tests/experiments/__init__.py` shadowed `src/experiments` — removed test package init
+
+- Tasks Completed:
+  - Task 32: Unified experiment framework (schemas, presets, metrics, segments, ranking)
+  - Task 33: Entry/exit evaluation runners + trade simulator
+  - Task 34: Entry+Exit VectorBT runner + run_experiment.py
+  - Task 35: Tests, README, replace old experiment scripts

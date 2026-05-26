@@ -1,9 +1,5 @@
-- [x] Task 23: Top-N entry policy (use factor ranks in backtest)
-- [x] Task 24: Extend research window / larger demo universe (meaningful IS/OOS IC)
-- [x] Task 25: Factor performance module (quantile spreads, long-short premia)
-- [x] Task 26: Complete entry robustness (rank + parameter stability first)
-- [x] Task 27: Wire exit robustness into experiments
-- [x] Task 28: Universe builder in experiment runner
-- [x] Task 29: Documentation (README experiment runs + report sections)
-- [x] Task 30: Factor combination in multi-factor experiments
-- [x] Task 31: Housekeeping (DEVLOG, pyproject research package, full pytest in CI)
+- [x] Task 23–31: Prior experiment work (see git history)
+- [x] Task 32: Unified experiment framework (schemas, presets, metrics, segments, ranking)
+- [x] Task 33: Entry/exit evaluation runners + trade simulator
+- [x] Task 34: Entry+Exit VectorBT runner + run_experiment.py
+- [x] Task 35: Tests, README, replace old experiment scripts

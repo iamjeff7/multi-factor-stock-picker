@@ -1,0 +1,32 @@
+experiment_name: entry_and_exit_demo
+experiment_mode: entry_and_exit
+data_preset: demo
+initial_capital: 100000
+slippage_pct: 0.001
+commission_pct: 0.0
+rebalance_frequency: MONTHLY
+portfolio_mode: SINGLE
+position_size_method: EQUAL_WEIGHT
+
+# Update these paths after running entry_demo and exit_demo (see README).
+combined:
+  entry_rankings_source: results/entry_demo/exp_e7775c42a7ae/rankings/entry_top_factors.json
+  exit_rankings_source: results/exit_demo/exp_c63c77773e87/rankings/exit_top_factors.json
+  benchmark_ticker: SPY
+  risk_free_source: T_BILL
+
+securities:
+  - security_id: SEC_AAPL
+    ticker: AAPL
+  - security_id: SEC_MSFT
+    ticker: MSFT
+  - security_id: SEC_GOOGL
+    ticker: GOOGL
+  - security_id: SEC_AMZN
+    ticker: AMZN
+  - security_id: SEC_META
+    ticker: META
+  - security_id: SEC_NVDA
+    ticker: NVDA
+  - security_id: SEC_TSLA
+    ticker: TSLA

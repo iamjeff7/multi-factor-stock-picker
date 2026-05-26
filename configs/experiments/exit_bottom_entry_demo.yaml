@@ -1,0 +1,33 @@
+experiment_name: exit_bottom_entry_demo
+experiment_mode: exit
+data_preset: demo
+initial_capital: 100000
+slippage_pct: 0.001
+commission_pct: 0.0
+rebalance_frequency: MONTHLY
+portfolio_mode: SINGLE
+position_size_method: EQUAL_WEIGHT
+
+exit:
+  entry_evaluation_mode: bottom_entry
+  entry_cadence: week
+
+ranking:
+  qualifying_percentile: 95
+  min_qualifying_factors: 1
+
+securities:
+  - security_id: SEC_AAPL
+    ticker: AAPL
+  - security_id: SEC_MSFT
+    ticker: MSFT
+  - security_id: SEC_GOOGL
+    ticker: GOOGL
+  - security_id: SEC_AMZN
+    ticker: AMZN
+  - security_id: SEC_META
+    ticker: META
+  - security_id: SEC_NVDA
+    ticker: NVDA
+  - security_id: SEC_TSLA
+    ticker: TSLA

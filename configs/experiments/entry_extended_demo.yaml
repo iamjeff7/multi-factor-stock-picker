@@ -1,0 +1,34 @@
+experiment_name: entry_extended_demo
+experiment_mode: entry
+data_preset: extended_demo
+initial_capital: 100000
+slippage_pct: 0.001
+commission_pct: 0.0
+rebalance_frequency: MONTHLY
+portfolio_mode: SINGLE
+position_size_method: EQUAL_WEIGHT
+
+entry:
+  exit_evaluation_mode: fixed_period
+  exit_horizons_months: [1, 3, 6, 12]
+  forward_window_trading_months: 6
+
+ranking:
+  qualifying_percentile: 95
+  min_qualifying_factors: 1
+
+securities:
+  - security_id: SEC_AAPL
+    ticker: AAPL
+  - security_id: SEC_MSFT
+    ticker: MSFT
+  - security_id: SEC_GOOGL
+    ticker: GOOGL
+  - security_id: SEC_AMZN
+    ticker: AMZN
+  - security_id: SEC_META
+    ticker: META
+  - security_id: SEC_NVDA
+    ticker: NVDA
+  - security_id: SEC_TSLA
+    ticker: TSLA

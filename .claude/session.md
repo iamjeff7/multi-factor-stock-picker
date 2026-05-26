@@ -1,14 +1,20 @@
-**Current Task:** All tasks complete
+**Current Task:** Task 35: Tests, README, replace old experiment scripts
+Status: Complete
 
 ## What's Done
-- Tasks 28–31 complete
-- CI: `.github/workflows/ci.yml` runs ruff, mypy, pytest tests/
-- pyproject.toml includes `research` and `evaluation/exit/robustness` packages
-- DEVLOG Session 8 appended
+- Unified experiment framework under `src/experiments/`
+- `scripts/run_experiment.py` + demo/extended configs
+- Entry/exit runners with segmented 95th-percentile rankings
+- Combined VectorBT runner (optional `.[research]` deps)
+- README updated; legacy scripts delegate to new CLI
+- Unit + integration tests in `tests/experiments/`
 
 ## Next Steps
-1. Push branch (8 commits ahead of origin/main)
+1. Commit when ready
+2. Optional: wire full robustness scoring (currently placeholder)
+3. Optional: `full` data preset when broad dataset exists
 
 ## Context
-- Full test suite: 198 tests passing
-- All tasks in `.claude/tasks.md` checked off
+- Demo = most recent complete calendar trading year
+- Metrics: trades_per_trading_days, trades_per_month (no turnover_rate)
+- Multi-position per ticker in trade simulator
