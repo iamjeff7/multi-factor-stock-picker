@@ -3,7 +3,7 @@
 - [x] Task 25: Factor performance module (quantile spreads, long-short premia)
 - [x] Task 26: Complete entry robustness (rank + parameter stability first)
 - [x] Task 27: Wire exit robustness into experiments
-- [ ] Task 28: Universe builder in experiment runner
-- [ ] Task 29: Documentation (README experiment runs + report sections)
+- [x] Task 28: Universe builder in experiment runner
+- [x] Task 29: Documentation (README experiment runs + report sections)
 - [ ] Task 30: Factor combination in multi-factor experiments
 - [ ] Task 31: Housekeeping (DEVLOG, pyproject research package, full pytest in CI)
