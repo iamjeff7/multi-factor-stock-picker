@@ -19,12 +19,15 @@ from entry_signals.protocols import EntrySignal
 from factors.ic.calculator import SpearmanICCalculator
 from factors.ic.config import ICConfig
 from factors.ic.forward_returns import ForwardReturnCalculator
+from factors.performance.calculator import FactorPerformanceCalculator
+from factors.performance.config import FactorPerformanceConfig
 from factors.scoring.config import FactorScoringConfig
 from factors.scoring.scorer import PercentileRankFactorScorer
 from research.sample_split import SampleSplit
 from schemas.entry import EntrySignalResult
 from schemas.factors import FactorScore
 from schemas.ic import DailyICResult, ForwardReturn, ICSampleAnalysis, ICSummary
+from schemas.performance import FactorPerformanceSampleAnalysis, FactorPerformanceSummary
 from schemas.results import EntrySignalResultRecord, FactorScoreRecord
 from schemas.robustness import EntryRobustnessResult
 from schemas.universe import UniverseMembership, UniverseMembershipSnapshot, UniverseMetadata
@@ -45,6 +48,7 @@ class FactorEvaluationResult(BaseModel):
     full_ic_summary: ICSummary | None = None
     entry_robustness: EntryRobustnessResult | None = None
     robustness_pending_dimensions: list[str] = Field(default_factory=list)
+    factor_performance: FactorPerformanceSampleAnalysis | FactorPerformanceSummary | None = None
     daily_ic_count: int = 0
     skipped_dates: int = 0
 
@@ -272,6 +276,23 @@ class SingleFactorFactorEvaluator:
                 ic_analysis=ic_analysis,
             )
 
+        factor_performance = None
+        if settings.performance.enabled:
+            performance_config = FactorPerformanceConfig(
+                quantile_count=settings.performance.quantile_count,
+                top_quantile=settings.performance.top_quantile,
+                bottom_quantile=settings.performance.bottom_quantile,
+            )
+            factor_performance = FactorPerformanceCalculator(
+                config=performance_config,
+            ).analyze(
+                factor_scores,
+                forward_returns,
+                signal_id=signal_id,
+                horizon=settings.primary_horizon,
+                split=split,
+            )
+
         evaluation_result = FactorEvaluationResult(
             signal_id=signal_id,
             horizon=settings.primary_horizon,
@@ -280,6 +301,7 @@ class SingleFactorFactorEvaluator:
             full_ic_summary=full_ic_summary,
             entry_robustness=entry_robustness,
             robustness_pending_dimensions=pending_dimensions,
+            factor_performance=factor_performance,
             daily_ic_count=len(primary_daily_ic),
             skipped_dates=skipped_dates,
         )

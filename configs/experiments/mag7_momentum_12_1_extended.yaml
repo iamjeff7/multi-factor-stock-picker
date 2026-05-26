@@ -19,6 +19,11 @@ factor_evaluation:
   minimum_security_count: 7
   primary_horizon: 63
   horizons: [21, 63]
+  performance:
+    enabled: true
+    quantile_count: 5
+    top_quantile: 5
+    bottom_quantile: 1
 
 securities:
   - security_id: SEC_AAPL

@@ -1,6 +1,6 @@
 - [x] Task 23: Top-N entry policy (use factor ranks in backtest)
 - [x] Task 24: Extend research window / larger demo universe (meaningful IS/OOS IC)
-- [ ] Task 25: Factor performance module (quantile spreads, long-short premia)
+- [x] Task 25: Factor performance module (quantile spreads, long-short premia)
 - [ ] Task 26: Complete entry robustness (rank + parameter stability first)
 - [ ] Task 27: Wire exit robustness into experiments
 - [ ] Task 28: Universe builder in experiment runner

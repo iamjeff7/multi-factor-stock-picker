@@ -4,6 +4,14 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, model_validator
 
+from factors.performance.config import FactorPerformanceConfig
+
+
+class FactorPerformanceSettings(FactorPerformanceConfig):
+    """Performance analysis settings embedded in experiment config."""
+
+    enabled: bool = True
+
 
 class FactorEvaluationSettings(BaseModel):
     """Controls cross-sectional scoring and IC analysis in experiments."""
@@ -13,6 +21,7 @@ class FactorEvaluationSettings(BaseModel):
     primary_horizon: int = Field(default=63, ge=1)
     horizons: list[int] = Field(default_factory=lambda: [63])
     compute_robustness: bool = True
+    performance: FactorPerformanceSettings = Field(default_factory=FactorPerformanceSettings)
 
     @model_validator(mode="after")
     def validate_horizons(self) -> FactorEvaluationSettings:

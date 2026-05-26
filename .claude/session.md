@@ -1,18 +1,17 @@
-**Current Task:** Task 25: Factor performance module
+**Current Task:** Task 26: Complete entry robustness (rank + parameter stability first)
 Status: in progress
 
 ## What's Done
-- Task 23 committed (3d543d2): Top-N entry policy
-- Task 24: Extended research window for meaningful IS/OOS IC
-  - Added `mag7_momentum_12_1_extended.yaml` and `mag7_momentum_6_1_extended.yaml` (2020–2024)
-  - Short Mag7 configs now include 21d + 63d IC horizons
-  - Extended window produces IS/OOS IC and non-zero sample stability (~0.98)
+- Task 25: Factor performance module
+  - `FactorPerformanceCalculator` with quintile spreads and long-short returns
+  - IS/OOS performance summaries in experiment report (`factor_performance` section)
+  - Mag7 configs use quintiles (5) for 7-stock demo universe
+  - Slimmed package `__init__.py` files to break circular imports
 
 ## Next Steps
-1. Implement quantile spread / long-short performance per spec
-2. Add `factor_performance` section to experiment report
+1. Implement rank stability (rank correlation across rebalance dates)
+2. Implement parameter stability (momentum lookback/skip sweeps)
 
 ## Context
-- Mag7 fixture already spans 2018–2026; 1-year demo configs kept for fast runs
-- Extended configs use 60 monthly rebalance dates vs 12 in the 2023-only window
-- Broader ≥30-name universe deferred; extended dates satisfy Task 24 acceptance criteria
+- Extended demo: mean Q5-Q1 spread ~13.4% at 63d horizon, 61% spread win rate
+- Performance uses same forward returns as IC analysis on primary horizon

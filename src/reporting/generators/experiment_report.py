@@ -10,6 +10,7 @@ from pathlib import Path
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
 from backtest.factor_evaluation import FactorEvaluationResult
 from reporting.layout import ResultLayout
+from schemas.performance import FactorPerformanceSampleAnalysis
 from schemas.results import ExperimentSummaryRecord, StockSummaryRecord, TradeRecord
 
 
@@ -75,6 +76,7 @@ def build_experiment_report_payload(
         payload["factor_scoring"] = _factor_scoring_payload(result.factor_evaluation)
         payload["factor_ic"] = _factor_ic_payload(result.factor_evaluation)
         payload["entry_robustness"] = _entry_robustness_payload(result.factor_evaluation)
+        payload["factor_performance"] = _factor_performance_payload(result.factor_evaluation)
     return payload
 
 
@@ -142,6 +144,44 @@ def _entry_robustness_payload(factor_evaluation: FactorEvaluationResult) -> dict
         "return_stability_score": str(robustness.return_stability_score),
         "sample_stability_score": str(robustness.sample_stability_score),
         "pending_dimensions": factor_evaluation.robustness_pending_dimensions,
+    }
+
+
+def _factor_performance_payload(
+    factor_evaluation: FactorEvaluationResult,
+) -> dict[str, object]:
+    performance = factor_evaluation.factor_performance
+    if performance is None:
+        return {
+            "signal_id": str(factor_evaluation.signal_id),
+            "horizon": factor_evaluation.horizon,
+            "available": False,
+        }
+
+    if isinstance(performance, FactorPerformanceSampleAnalysis):
+        payload: dict[str, object] = {
+            "signal_id": str(performance.signal_id),
+            "horizon": performance.horizon,
+            "available": True,
+        }
+        if performance.full_summary is not None:
+            payload["full"] = performance.full_summary.model_dump(mode="json")
+        payload["sample_metrics"] = {
+            performance.in_sample_summary.sample_period.value: (
+                performance.in_sample_summary.model_dump(mode="json")
+            ),
+            performance.out_of_sample_summary.sample_period.value: (
+                performance.out_of_sample_summary.model_dump(mode="json")
+            ),
+        }
+        return payload
+
+    return {
+        "signal_id": str(performance.signal_id),
+        "horizon": performance.horizon,
+        "available": True,
+        "full": performance.model_dump(mode="json"),
+        "sample_metrics": None,
     }
 
 
