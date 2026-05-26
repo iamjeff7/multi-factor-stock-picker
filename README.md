@@ -85,6 +85,18 @@ python scripts/run_single_factor_experiment.py \
 
 Use `--data` to point at a Parquet dataset (default: `tests/fixtures/data/mag7`).
 
+### Multi-factor experiments
+
+Combine normalized factor scores with `WeightedMeanFactorCombiner`, then apply top-N entry from composite ranks:
+
+```bash
+python scripts/run_multi_factor_experiment.py \
+  --config configs/experiments/mag7_multi_momentum.yaml \
+  --output-dir results/multi_factor_demo
+```
+
+The report includes a `factor_combination` section and persists per-factor and composite score Parquet tables.
+
 ### Experiment configs
 
 | Config | Purpose |
@@ -94,6 +106,7 @@ Use `--data` to point at a Parquet dataset (default: `tests/fixtures/data/mag7`)
 | `mag7_momentum_12_1_extended.yaml` | 2020–2024, factor eval + top-N entry |
 | `mag7_momentum_12_1_universe.yaml` | Extended window, universe builder |
 | `mag7_momentum_6_1.yaml` / `_extended.yaml` | 6-1 momentum variants |
+| `mag7_multi_momentum.yaml` | Multi-factor 12-1 + 6-1 composite, top-N entry |
 
 Key config fields:
 
@@ -131,6 +144,7 @@ Parquet tables hold Layer A signal/score records and Layer B stock summaries. Th
 | `factor_ic` | Spearman IC by horizon; IS/OOS IC summaries and degradation |
 | `entry_robustness` | IC, return, sample, rank, and parameter stability scores |
 | `factor_performance` | Quintile forward-return spreads and long-short premia |
+| `factor_combination` | Multi-factor composite score summary (multi-factor runs only) |
 | `exit_robustness` | Exit-stack stability from trade outcomes (performance, sample, holding period, distribution, risk) |
 
 Pending dimensions (not yet scored) appear under `pending_dimensions` in the robustness sections.

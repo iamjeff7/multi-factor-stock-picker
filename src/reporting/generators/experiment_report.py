@@ -9,6 +9,7 @@ from pathlib import Path
 
 from backtest.exit_robustness_models import ExitRobustnessEvaluation
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
+from backtest.factor_combination_flow import MultiFactorCombinationResult
 from backtest.factor_evaluation import FactorEvaluationResult
 from reporting.layout import ResultLayout
 from schemas.performance import FactorPerformanceSampleAnalysis
@@ -80,7 +81,23 @@ def build_experiment_report_payload(
         payload["factor_performance"] = _factor_performance_payload(result.factor_evaluation)
     if result.exit_robustness is not None:
         payload["exit_robustness"] = _exit_robustness_payload(result.exit_robustness)
+    if result.factor_combination is not None:
+        payload["factor_combination"] = _factor_combination_payload(result.factor_combination)
     return payload
+
+
+def _factor_combination_payload(
+    factor_combination: MultiFactorCombinationResult,
+) -> dict[str, object]:
+    summary = factor_combination.summary
+    return {
+        "evaluation_dates": summary.evaluation_dates,
+        "total_composite_scores": summary.total_composite_scores,
+        "securities_per_date": summary.securities_per_date,
+        "factor_signal_ids": summary.factor_signal_ids,
+        "skipped_dates": summary.skipped_dates,
+        "combination_method": "WEIGHTED_MEAN",
+    }
 
 
 def _factor_scoring_payload(factor_evaluation: FactorEvaluationResult) -> dict[str, object]:

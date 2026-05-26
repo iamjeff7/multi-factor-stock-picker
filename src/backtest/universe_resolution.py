@@ -5,15 +5,18 @@ from __future__ import annotations
 from datetime import date
 
 from backtest.experiment_config import ExperimentSecurity, SingleFactorExperimentConfig
+from backtest.multi_factor_experiment_config import MultiFactorExperimentConfig
 from config.models import UniverseSettings
 from core.exceptions import ValidationError
 from data.protocols import DataAccess
 from data.universe.builder import DefaultUniverseBuilder
 from data.universe.protocols import UniverseBuilder
 
+ExperimentConfig = SingleFactorExperimentConfig | MultiFactorExperimentConfig
+
 
 def resolve_experiment_securities(
-    config: SingleFactorExperimentConfig,
+    config: ExperimentConfig,
     data_access: DataAccess,
     *,
     evaluation_date: date | None = None,
@@ -39,12 +42,12 @@ def resolve_experiment_securities(
 
 
 def with_resolved_securities(
-    config: SingleFactorExperimentConfig,
+    config: ExperimentConfig,
     data_access: DataAccess,
     *,
     evaluation_date: date | None = None,
     universe_builder: UniverseBuilder | None = None,
-) -> SingleFactorExperimentConfig:
+) -> ExperimentConfig:
     """Return a config copy with universe-resolved securities and validated top_n."""
     securities = resolve_experiment_securities(
         config,

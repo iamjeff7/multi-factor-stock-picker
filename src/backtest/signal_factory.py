@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from decimal import Decimal
 
 from backtest.experiment_config import SignalConfig
@@ -39,6 +40,10 @@ def build_entry_signal(config: SignalConfig) -> EntrySignal:
             missing_data_policy=_parse_missing_data_policy(config.params),
         )
     raise ConfigurationError(f"Unknown entry signal: {config.name}")
+
+
+def build_entry_signals(configs: Sequence[SignalConfig]) -> list[EntrySignal]:
+    return [build_entry_signal(config) for config in configs]
 
 
 def _parse_missing_data_policy(params: dict[str, object]) -> MissingDataPolicy:

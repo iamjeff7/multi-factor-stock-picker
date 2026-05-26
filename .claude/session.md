@@ -1,13 +1,19 @@
 **Current Task:** Task 30: Factor combination in multi-factor experiments
-Status: in progress
+Status: Complete
 
 ## What's Done
-- Task 28 committed: universe builder in experiment runner (31bf01b)
-- Task 29: README updated with experiment run commands, config table, output layout, report sections
+- `MultiFactorExperimentConfig` with `entry_signals`, `factor_combination`, and shared universe/top_n settings
+- `score_and_combine_multi_factor()` scores each factor and combines via `WeightedMeanFactorCombiner`
+- `MultiFactorExperimentRunner` uses composite scores for top-N entry and persists composite + factor score Parquet
+- `factor_combination` section added to experiment report
+- Demo config `mag7_multi_momentum.yaml` and `scripts/run_multi_factor_experiment.py`
+- Tests in `tests/backtest/test_multi_factor_experiment.py` (3 passing)
+- README updated with multi-factor run command
 
 ## Next Steps
-1. Wire `WeightedMeanFactorCombiner` into experiment flow for multi-factor runs
+1. Commit changes
+2. Task 31: Housekeeping (DEVLOG, pyproject, CI)
 
 ## Context
-- README documents stub, extended momentum, and universe-based experiment configs
-- Report sections: experiment_metrics, sample_metrics, factor_scoring, factor_ic, entry_robustness, factor_performance, exit_robustness
+- Composite entry uses precomputed composite scores via `CompositeScoreEntrySignal`
+- Demo: 84 composite scores across 12 rebalance dates for Mag7 2023 window
