@@ -8,6 +8,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, model_validator
 
 from backtest.config import SingleStockBacktestConfig
+from backtest.factor_evaluation_config import FactorEvaluationSettings
 from config.models import BacktestSettings
 from core.enums import PortfolioMode
 from core.types import SecurityId, Ticker
@@ -35,6 +36,7 @@ class SingleFactorExperimentConfig(BacktestSettings):
     entry_signal: SignalConfig
     exit_signal: SignalConfig
     research: ResearchSettings = Field(default_factory=ResearchSettings)
+    factor_evaluation: FactorEvaluationSettings = Field(default_factory=FactorEvaluationSettings)
 
     @model_validator(mode="after")
     def validate_experiment_settings(self) -> SingleFactorExperimentConfig:

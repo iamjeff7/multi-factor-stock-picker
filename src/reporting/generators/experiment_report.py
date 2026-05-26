@@ -8,6 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
+from backtest.factor_evaluation import FactorEvaluationResult
 from reporting.layout import ResultLayout
 from schemas.results import ExperimentSummaryRecord, StockSummaryRecord, TradeRecord
 
@@ -70,7 +71,78 @@ def build_experiment_report_payload(
         }
     if result.degradation is not None:
         payload["is_to_oos_degradation"] = result.degradation.model_dump(mode="json")
+    if result.factor_evaluation is not None:
+        payload["factor_scoring"] = _factor_scoring_payload(result.factor_evaluation)
+        payload["factor_ic"] = _factor_ic_payload(result.factor_evaluation)
+        payload["entry_robustness"] = _entry_robustness_payload(result.factor_evaluation)
     return payload
+
+
+def _factor_scoring_payload(factor_evaluation: FactorEvaluationResult) -> dict[str, object]:
+    summary = factor_evaluation.scoring_summary
+    return {
+        "signal_id": str(summary.signal_id),
+        "evaluation_dates": summary.evaluation_dates,
+        "total_scores": summary.total_scores,
+        "securities_per_date": summary.securities_per_date,
+        "skipped_dates": factor_evaluation.skipped_dates,
+    }
+
+
+def _factor_ic_payload(factor_evaluation: FactorEvaluationResult) -> dict[str, object] | None:
+    analysis = factor_evaluation.ic_analysis
+    if analysis is None and factor_evaluation.full_ic_summary is None:
+        return {
+            "signal_id": str(factor_evaluation.signal_id),
+            "horizon": factor_evaluation.horizon,
+            "daily_ic_count": factor_evaluation.daily_ic_count,
+            "available": False,
+        }
+
+    payload: dict[str, object] = {
+        "signal_id": str(factor_evaluation.signal_id),
+        "horizon": factor_evaluation.horizon,
+        "daily_ic_count": factor_evaluation.daily_ic_count,
+        "available": True,
+    }
+    if analysis is not None:
+        if analysis.full_summary is not None:
+            payload["full"] = analysis.full_summary.model_dump(mode="json")
+        payload["sample_metrics"] = {
+            analysis.in_sample_summary.sample_period.value: analysis.in_sample_summary.model_dump(
+                mode="json"
+            ),
+            analysis.out_of_sample_summary.sample_period.value: (
+                analysis.out_of_sample_summary.model_dump(mode="json")
+            ),
+        }
+        payload["is_to_oos_degradation"] = analysis.degradation.model_dump(mode="json")
+    elif factor_evaluation.full_ic_summary is not None:
+        payload["full"] = factor_evaluation.full_ic_summary.model_dump(mode="json")
+        payload["sample_metrics"] = None
+        payload["is_to_oos_degradation"] = None
+    return payload
+
+
+def _entry_robustness_payload(factor_evaluation: FactorEvaluationResult) -> dict[str, object]:
+    robustness = factor_evaluation.entry_robustness
+    if robustness is None:
+        return {
+            "signal_id": str(factor_evaluation.signal_id),
+            "available": False,
+            "pending_dimensions": factor_evaluation.robustness_pending_dimensions,
+        }
+
+    return {
+        "signal_id": str(robustness.signal_id),
+        "available": True,
+        "overall_robustness_score": str(robustness.overall_robustness_score),
+        "robustness_classification": robustness.robustness_classification,
+        "ic_stability_score": str(robustness.ic_stability_score),
+        "return_stability_score": str(robustness.return_stability_score),
+        "sample_stability_score": str(robustness.sample_stability_score),
+        "pending_dimensions": factor_evaluation.robustness_pending_dimensions,
+    }
 
 
 def _trade_metrics(trades: list[TradeRecord]) -> dict[str, object]:

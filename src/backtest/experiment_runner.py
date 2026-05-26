@@ -13,12 +13,14 @@ from backtest.engine import SingleStockBacktestEngine
 from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy
 from backtest.experiment_config import SingleFactorExperimentConfig
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
+from backtest.factor_evaluation import SingleFactorFactorEvaluator
 from backtest.statistics import DefaultPerformanceCalculator
 from core.enums import ExperimentStatus, ExperimentType, SamplePeriod
 from core.exceptions import ValidationError
 from core.types import ConfigurationHash, DataVersion, ExperimentId, UniverseVersion
 from data.protocols import DataAccess
 from entry_signals.protocols import EntrySignal
+from evaluation.robustness.mapping import to_robustness_score_record
 from exit_signals.protocols import ExitSignal
 from reporting.aggregators import aggregate_stock_summaries
 from reporting.experiment_aggregators import (
@@ -42,7 +44,9 @@ from schemas.backtest import Trade
 from schemas.results import (
     BacktestSummaryRecord,
     ConfigurationSnapshotRecord,
+    EntrySignalResultRecord,
     ExperimentMetadata,
+    FactorScoreRecord,
     TradeRecord,
     VersionMetadataRecord,
 )
@@ -206,6 +210,18 @@ class SingleFactorExperimentRunner:
         )
         degradation = compute_degradation_metrics(is_summary, oos_summary)
 
+        factor_evaluation, entry_signal_records, factor_score_records = (
+            SingleFactorFactorEvaluator().evaluate(
+                config=config,
+                data_access=data_access,
+                entry_signal=entry_signal,
+                trading_days=trading_days,
+                split=sample_split,
+                settings=config.factor_evaluation,
+                experiment_id=parent_experiment_id,
+            )
+        )
+
         experiment_result = ExperimentRunResult(
             experiment_id=parent_experiment_id,
             stock_results=stock_results,
@@ -215,6 +231,7 @@ class SingleFactorExperimentRunner:
             sample_summaries=[is_summary, oos_summary],
             sample_split=split_metadata,
             degradation=degradation,
+            factor_evaluation=factor_evaluation,
         )
 
         if store is not None:
@@ -225,6 +242,8 @@ class SingleFactorExperimentRunner:
                 entry_signal=entry_signal,
                 exit_signal=exit_signal,
                 result=experiment_result,
+                entry_signal_records=entry_signal_records,
+                factor_score_records=factor_score_records,
                 output_dir=output_dir,
             )
 
@@ -239,6 +258,8 @@ class SingleFactorExperimentRunner:
         entry_signal: EntrySignal,
         exit_signal: ExitSignal,
         result: ExperimentRunResult,
+        entry_signal_records: list[EntrySignalResultRecord],
+        factor_score_records: list[FactorScoreRecord],
         output_dir: Path | None,
     ) -> None:
         config_hash = ConfigurationHash(self._configuration_hash(config))
@@ -284,6 +305,20 @@ class SingleFactorExperimentRunner:
         )
         if result.trade_records:
             store.save_trades(result.trade_records)
+        if entry_signal_records:
+            store.save_entry_signal_results(entry_signal_records)
+        if factor_score_records:
+            store.save_factor_scores(factor_score_records)
+        if (
+            result.factor_evaluation is not None
+            and result.factor_evaluation.entry_robustness is not None
+        ):
+            store.save_robustness_score(
+                to_robustness_score_record(
+                    result.factor_evaluation.entry_robustness,
+                    experiment_id=result.experiment_id,
+                )
+            )
         if result.stock_summaries:
             if isinstance(store, ValidatingStore):
                 store.validate_stock_summary_matches_trades(

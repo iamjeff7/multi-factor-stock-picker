@@ -13,6 +13,12 @@ research:
   research_phase: VALIDATION
   sample_scope: FULL
 
+factor_evaluation:
+  enabled: true
+  minimum_security_count: 7
+  primary_horizon: 63
+  horizons: [63]
+
 securities:
   - security_id: SEC_AAPL
     ticker: AAPL

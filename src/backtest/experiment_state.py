@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from backtest.factor_evaluation import FactorEvaluationResult
 from core.types import ExperimentId, SecurityId, Ticker
 from research.config import SampleSplitMetadata
 from research.degradation import SampleDegradationMetrics
@@ -36,6 +37,7 @@ class ExperimentRunResult(BaseModel):
     sample_summaries: list[ExperimentSummaryRecord] = Field(default_factory=list)
     sample_split: SampleSplitMetadata | None = None
     degradation: SampleDegradationMetrics | None = None
+    factor_evaluation: FactorEvaluationResult | None = None
     report_path: str | None = None
 
     @property
