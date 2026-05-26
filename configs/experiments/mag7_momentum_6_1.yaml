@@ -7,6 +7,7 @@ commission_pct: 0.0
 rebalance_frequency: MONTHLY
 portfolio_mode: SINGLE
 position_size_method: EQUAL_WEIGHT
+top_n: 2
 
 research:
   research_mode: DEMO

@@ -3,7 +3,12 @@
 from backtest.calendar import is_rebalance_date, next_trading_day, trading_days_between
 from backtest.config import BacktestConfig, SingleStockBacktestConfig
 from backtest.engine import SingleStockBacktestEngine
-from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy, ThresholdEntryPolicy
+from backtest.entry_policy import (
+    EntryPolicy,
+    SignalPresentEntryPolicy,
+    ThresholdEntryPolicy,
+    TopNEntryPolicy,
+)
 from backtest.execution import ExecutionFill, NextBarExecutionModel
 from backtest.experiment_config import SingleFactorExperimentConfig
 from backtest.experiment_runner import SingleFactorExperimentRunner
@@ -44,6 +49,7 @@ __all__ = [
     "SingleFactorExperimentConfig",
     "SingleFactorExperimentRunner",
     "ThresholdEntryPolicy",
+    "TopNEntryPolicy",
     "BacktestValidator",
     "build_position_sizer",
     "is_rebalance_date",

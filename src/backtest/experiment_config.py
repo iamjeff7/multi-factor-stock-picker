@@ -37,6 +37,7 @@ class SingleFactorExperimentConfig(BacktestSettings):
     exit_signal: SignalConfig
     research: ResearchSettings = Field(default_factory=ResearchSettings)
     factor_evaluation: FactorEvaluationSettings = Field(default_factory=FactorEvaluationSettings)
+    top_n: int | None = None
 
     @model_validator(mode="after")
     def validate_experiment_settings(self) -> SingleFactorExperimentConfig:
@@ -46,6 +47,11 @@ class SingleFactorExperimentConfig(BacktestSettings):
             raise ValueError("end_date must be on or after start_date")
         if not self.securities:
             raise ValueError("At least one security is required")
+        if self.top_n is not None:
+            if self.top_n < 1:
+                raise ValueError("top_n must be at least 1")
+            if self.top_n > len(self.securities):
+                raise ValueError("top_n cannot exceed the number of securities")
 
         from research.validator import validate_research_settings
 

@@ -1,22 +1,9 @@
-- [x] Task 1: Add data deps, download script, Mag 7 Parquet dataset
-- [x] Task 2: ParquetLoader + DatasetManifest + InMemoryDataStore (PIT)
-- [x] Task 3: Dataset validation (price, volume, fundamentals, corporate actions)
-- [x] Task 4: Corporate action adjuster + PIT filter
-- [x] Task 5: DefaultUniverseBuilder + liquidity + validator (optional market cap)
-- [x] Task 6: Unit tests, edge-case fixtures, verification
-- [x] Task 7: Signal interfaces (entry/exit base, validation, registry, examples, tests)
-- [x] Task 8: Backtest config + portfolio state schemas
-- [x] Task 9: Execution model + position sizer (single-stock)
-- [x] Task 10: SingleStockBacktestEngine + trade lifecycle
-- [x] Task 11: Performance statistics calculator
-- [x] Task 12: Backtest validator + in-memory result store
-- [x] Task 13: Tests + example run script
-- [x] Task 14: Result schemas (StockSummaryRecord, report manifest, PK helpers)
-- [x] Task 15: ResultSchemaValidator + extended SchemaValidator protocol
-- [x] Task 16: Storage layer (InMemoryResultStore, ParquetResultStore, ValidatingResultStore)
-- [x] Task 17: Engine integration + example script --output-dir
-- [x] Task 18: Reporting tests (validator, stores, aggregators, parquet round-trip)
-- [x] Task 19: Experiment config + ExperimentSummaryRecord schemas
-- [x] Task 20: Experiment aggregators + validator extensions
-- [x] Task 21: SingleFactorExperimentRunner + report generator + script
-- [x] Task 22: Experiment runner tests
+- [x] Task 23: Top-N entry policy (use factor ranks in backtest)
+- [ ] Task 24: Extend research window / larger demo universe (meaningful IS/OOS IC)
+- [ ] Task 25: Factor performance module (quantile spreads, long-short premia)
+- [ ] Task 26: Complete entry robustness (rank + parameter stability first)
+- [ ] Task 27: Wire exit robustness into experiments
+- [ ] Task 28: Universe builder in experiment runner
+- [ ] Task 29: Documentation (README experiment runs + report sections)
+- [ ] Task 30: Factor combination in multi-factor experiments
+- [ ] Task 31: Housekeeping (DEVLOG, pyproject research package, full pytest in CI)

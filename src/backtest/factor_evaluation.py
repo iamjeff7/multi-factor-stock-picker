@@ -49,6 +49,12 @@ class FactorEvaluationResult(BaseModel):
     skipped_dates: int = 0
 
 
+class CrossSectionalScoreResult(BaseModel):
+    raw_results: list[EntrySignalResult]
+    factor_scores: list[FactorScore]
+    skipped_dates: int
+
+
 class SingleFactorFactorEvaluator:
     """Runs scoring and IC analysis on experiment rebalance dates."""
 
@@ -63,6 +69,66 @@ class SingleFactorFactorEvaluator:
         self._forward_returns = forward_return_calculator or ForwardReturnCalculator()
         self._ic_calculator = ic_calculator or SpearmanICCalculator()
 
+    def score_cross_section(
+        self,
+        *,
+        config: SingleFactorExperimentConfig,
+        data_access: DataAccess,
+        entry_signal: EntrySignal,
+        trading_days: Sequence[date],
+        settings: FactorEvaluationSettings,
+    ) -> CrossSectionalScoreResult | None:
+        if len(config.securities) < settings.minimum_security_count:
+            return None
+
+        scoring_config = FactorScoringConfig(
+            minimum_security_count=settings.minimum_security_count,
+        )
+        scorer = PercentileRankFactorScorer(config=scoring_config)
+        signal_id = SignalId(entry_signal.signal_id)
+        rebalance_dates = _collect_rebalance_dates(
+            list(trading_days),
+            config.rebalance_frequency,
+        )
+
+        raw_results: list[EntrySignalResult] = []
+        factor_scores: list[FactorScore] = []
+        skipped_dates = 0
+
+        for evaluation_date in rebalance_dates:
+            try:
+                date_raw, date_scores, _, _ = self._evaluate_date(
+                    evaluation_date=evaluation_date,
+                    config=config,
+                    data_access=data_access,
+                    entry_signal=entry_signal,
+                    trading_days=list(trading_days),
+                    signal_id=signal_id,
+                    scorer=scorer,
+                    ic_calculator=SpearmanICCalculator(
+                        config=ICConfig(
+                            minimum_security_count=settings.minimum_security_count,
+                            horizons=list(settings.horizons),
+                        )
+                    ),
+                    settings=settings,
+                )
+            except ValidationError:
+                skipped_dates += 1
+                continue
+
+            raw_results.extend(date_raw)
+            factor_scores.extend(date_scores)
+
+        if not factor_scores:
+            return None
+
+        return CrossSectionalScoreResult(
+            raw_results=raw_results,
+            factor_scores=factor_scores,
+            skipped_dates=skipped_dates,
+        )
+
     def evaluate(
         self,
         *,
@@ -73,6 +139,7 @@ class SingleFactorFactorEvaluator:
         split: SampleSplit,
         settings: FactorEvaluationSettings,
         experiment_id: ExperimentId | None = None,
+        cross_sectional_scores: CrossSectionalScoreResult | None = None,
     ) -> tuple[
         FactorEvaluationResult | None,
         list[EntrySignalResultRecord],
@@ -81,53 +148,79 @@ class SingleFactorFactorEvaluator:
         if not settings.enabled:
             return None, [], []
 
+        if cross_sectional_scores is not None:
+            raw_results = list(cross_sectional_scores.raw_results)
+            factor_scores = list(cross_sectional_scores.factor_scores)
+            skipped_dates = cross_sectional_scores.skipped_dates
+        else:
+            scored = self.score_cross_section(
+                config=config,
+                data_access=data_access,
+                entry_signal=entry_signal,
+                trading_days=trading_days,
+                settings=settings,
+            )
+            if scored is None:
+                return None, [], []
+            raw_results = scored.raw_results
+            factor_scores = scored.factor_scores
+            skipped_dates = scored.skipped_dates
+
         if len(config.securities) < settings.minimum_security_count:
             return None, [], []
 
-        scoring_config = FactorScoringConfig(
-            minimum_security_count=settings.minimum_security_count,
-        )
         ic_config = ICConfig(
             minimum_security_count=settings.minimum_security_count,
             horizons=list(settings.horizons),
         )
-        scorer = PercentileRankFactorScorer(config=scoring_config)
         ic_calculator = SpearmanICCalculator(config=ic_config)
-
         signal_id = SignalId(entry_signal.signal_id)
         rebalance_dates = _collect_rebalance_dates(
             list(trading_days),
             config.rebalance_frequency,
         )
 
-        raw_results: list[EntrySignalResult] = []
-        factor_scores: list[FactorScore] = []
         forward_returns: list[ForwardReturn] = []
         daily_ic_results: list[DailyICResult] = []
-        skipped_dates = 0
 
         for evaluation_date in rebalance_dates:
-            try:
-                date_raw, date_scores, date_forward, date_ic = self._evaluate_date(
-                    evaluation_date=evaluation_date,
-                    config=config,
-                    data_access=data_access,
-                    entry_signal=entry_signal,
-                    trading_days=list(trading_days),
-                    signal_id=signal_id,
-                    scorer=scorer,
-                    ic_calculator=ic_calculator,
-                    settings=settings,
-                )
-            except ValidationError:
-                skipped_dates += 1
+            date_scores = [
+                row for row in factor_scores if row.evaluation_date == evaluation_date
+            ]
+            if not date_scores:
                 continue
 
-            raw_results.extend(date_raw)
-            factor_scores.extend(date_scores)
-            forward_returns.extend(date_forward)
-            if date_ic is not None:
-                daily_ic_results.extend(date_ic)
+            security_ids = [security.security_id for security in config.securities]
+            date_forward_returns: list[ForwardReturn] = []
+            for horizon in settings.horizons:
+                date_forward_returns.extend(
+                    self._forward_returns.calculate_for_universe(
+                        security_ids=security_ids,
+                        evaluation_date=evaluation_date,
+                        horizon=horizon,
+                        trading_days=list(trading_days),
+                        data_access=data_access,
+                    )
+                )
+            forward_returns.extend(date_forward_returns)
+
+            for horizon in settings.horizons:
+                horizon_returns = {
+                    row.security_id: row.forward_return
+                    for row in date_forward_returns
+                    if row.horizon == horizon
+                }
+                if not horizon_returns:
+                    continue
+                daily_ic_results.append(
+                    ic_calculator.calculate_daily_ic(
+                        date_scores,
+                        horizon_returns,
+                        evaluation_date,
+                        signal_id=signal_id,
+                        horizon=horizon,
+                    )
+                )
 
         if not factor_scores:
             return None, [], []

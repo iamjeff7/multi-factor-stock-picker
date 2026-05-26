@@ -10,10 +10,11 @@ from decimal import Decimal
 from pathlib import Path
 
 from backtest.engine import SingleStockBacktestEngine
-from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy
+from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy, TopNEntryPolicy
 from backtest.experiment_config import SingleFactorExperimentConfig
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
 from backtest.factor_evaluation import SingleFactorFactorEvaluator
+from backtest.portfolio_selection import build_top_n_selections
 from backtest.statistics import DefaultPerformanceCalculator
 from core.enums import ExperimentStatus, ExperimentType, SamplePeriod
 from core.exceptions import ValidationError
@@ -78,7 +79,6 @@ class SingleFactorExperimentRunner:
         output_dir: Path | None = None,
         experiment_id: ExperimentId | None = None,
     ) -> ExperimentRunResult:
-        policy = entry_policy or SignalPresentEntryPolicy()
         parent_experiment_id = experiment_id or ExperimentId(f"exp_{uuid.uuid4().hex[:12]}")
         store = result_store or self._build_result_store(output_dir)
 
@@ -101,6 +101,33 @@ class SingleFactorExperimentRunner:
             split=sample_split,
         )
         split_metadata = split_to_metadata(sample_split)
+
+        factor_evaluator = SingleFactorFactorEvaluator()
+        cross_sectional_scores = None
+        if entry_policy is not None:
+            policy = entry_policy
+        elif config.top_n is not None or config.factor_evaluation.enabled:
+            cross_sectional_scores = factor_evaluator.score_cross_section(
+                config=config,
+                data_access=data_access,
+                entry_signal=entry_signal,
+                trading_days=trading_days,
+                settings=config.factor_evaluation,
+            )
+            if config.top_n is not None:
+                if cross_sectional_scores is None:
+                    raise ValidationError(
+                        "Cannot apply top-N entry selection without cross-sectional factor scores"
+                    )
+                selections = build_top_n_selections(
+                    cross_sectional_scores.factor_scores,
+                    config.top_n,
+                )
+                policy = TopNEntryPolicy(selections)
+            else:
+                policy = SignalPresentEntryPolicy()
+        else:
+            policy = SignalPresentEntryPolicy()
 
         stock_results: list[StockRunResult] = []
         all_trades: list[TradeRecord] = []
@@ -211,7 +238,7 @@ class SingleFactorExperimentRunner:
         degradation = compute_degradation_metrics(is_summary, oos_summary)
 
         factor_evaluation, entry_signal_records, factor_score_records = (
-            SingleFactorFactorEvaluator().evaluate(
+            factor_evaluator.evaluate(
                 config=config,
                 data_access=data_access,
                 entry_signal=entry_signal,
@@ -219,6 +246,7 @@ class SingleFactorExperimentRunner:
                 split=sample_split,
                 settings=config.factor_evaluation,
                 experiment_id=parent_experiment_id,
+                cross_sectional_scores=cross_sectional_scores,
             )
         )
 

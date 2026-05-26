@@ -233,3 +233,59 @@ def test_experiment_runner_includes_factor_metrics_on_mag7(tmp_path: Path) -> No
     assert "factor_ic" in report_text
     assert "entry_robustness" in report_text
     assert result.factor_evaluation.entry_robustness is not None
+
+
+def test_experiment_runner_top_n_reduces_trades() -> None:
+    security_ids = [SecurityId(f"SEC_{index}") for index in range(7)]
+    start_date = date(2020, 1, 1)
+    day_count = 400
+    data_access = MultiSecurityDataAccess(
+        _build_cross_sectional_prices(
+            security_ids=security_ids,
+            start_date=start_date,
+            day_count=day_count,
+        )
+    )
+    base_kwargs = dict(
+        experiment_name="top_n_test",
+        start_date=date(2020, 7, 1),
+        end_date=date(2020, 12, 31),
+        initial_capital=10_000,
+        rebalance_frequency=RebalanceFrequency.MONTHLY,
+        portfolio_mode=PortfolioMode.SINGLE,
+        position_size_method=PositionSizeMethod.EQUAL_WEIGHT,
+        securities=[
+            ExperimentSecurity(security_id=security_id, ticker=Ticker(f"T{index}"))
+            for index, security_id in enumerate(security_ids)
+        ],
+        entry_signal=SignalConfig(name="momentum_12_1"),
+        exit_signal=SignalConfig(name="example_stub_exit", params={"max_holding_days": 63}),
+        research=ResearchSettings(
+            research_mode=ResearchMode.TEST,
+            research_phase=ResearchPhase.VALIDATION,
+            sample_scope=SampleScope.FULL,
+        ),
+        factor_evaluation=FactorEvaluationSettings(
+            minimum_security_count=7,
+            primary_horizon=21,
+            horizons=[21],
+        ),
+    )
+    runner = SingleFactorExperimentRunner()
+    unrestricted = runner.run(
+        config=SingleFactorExperimentConfig(**base_kwargs),
+        data_access=data_access,
+        entry_signal=Momentum12_1EntrySignal(),
+        exit_signal=ExampleStubExitSignal(max_holding_days=63),
+    )
+    restricted = runner.run(
+        config=SingleFactorExperimentConfig(**base_kwargs, top_n=1),
+        data_access=data_access,
+        entry_signal=Momentum12_1EntrySignal(),
+        exit_signal=ExampleStubExitSignal(max_holding_days=63),
+    )
+
+    assert (
+        restricted.experiment_summary.number_of_trades
+        < unrestricted.experiment_summary.number_of_trades
+    )
