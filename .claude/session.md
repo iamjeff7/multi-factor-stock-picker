@@ -1,17 +1,17 @@
-**Current Task:** Task 26: Complete entry robustness (rank + parameter stability first)
+**Current Task:** Task 27: Wire exit robustness into experiments
 Status: in progress
 
 ## What's Done
-- Task 25: Factor performance module
-  - `FactorPerformanceCalculator` with quintile spreads and long-short returns
-  - IS/OOS performance summaries in experiment report (`factor_performance` section)
-  - Mag7 configs use quintiles (5) for 7-stock demo universe
-  - Slimmed package `__init__.py` files to break circular imports
+- Task 26: Rank + parameter entry robustness wired into experiments
+  - Rank stability from consecutive-date factor score correlations and top-group persistence
+  - Parameter stability from momentum lookback ±20% IC sweep
+  - Pending dimensions reduced to regime + breadth only
+  - Extended demo: rank ~0.86, parameter ~0.66, overall ACCEPTABLE
 
 ## Next Steps
-1. Implement rank stability (rank correlation across rebalance dates)
-2. Implement parameter stability (momentum lookback/skip sweeps)
+1. Wire ExitRobustnessScorer from trade outcomes
+2. Add exit_robustness section to experiment report
 
 ## Context
-- Extended demo: mean Q5-Q1 spread ~13.4% at 63d horizon, 61% spread win rate
-- Performance uses same forward returns as IC analysis on primary horizon
+- Robustness weights renormalize over 5 active dimensions (ic, return, sample, rank, parameter)
+- Parameter sweep re-scores cross-section 3x (80%/100%/120% lookback) — noticeable runtime cost

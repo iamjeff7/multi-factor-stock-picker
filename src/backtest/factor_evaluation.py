@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import UTC, date, datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -273,6 +274,12 @@ class SingleFactorFactorEvaluator:
                 daily_ic_results=primary_daily_ic,
                 forward_returns=forward_returns,
                 split=split,
+                factor_scores=factor_scores,
+                config=config,
+                data_access=data_access,
+                entry_signal=entry_signal,
+                trading_days=trading_days,
+                settings=settings,
                 ic_analysis=ic_analysis,
             )
 
@@ -309,6 +316,80 @@ class SingleFactorFactorEvaluator:
         entry_records = _to_entry_signal_records(experiment_id, raw_results)
         score_records = _to_factor_score_records(experiment_id, factor_scores)
         return evaluation_result, entry_records, score_records
+
+    def compute_mean_ic(
+        self,
+        *,
+        config: SingleFactorExperimentConfig,
+        data_access: DataAccess,
+        entry_signal: EntrySignal,
+        trading_days: Sequence[date],
+        settings: FactorEvaluationSettings,
+        horizon: int,
+    ) -> Decimal | None:
+        scored = self.score_cross_section(
+            config=config,
+            data_access=data_access,
+            entry_signal=entry_signal,
+            trading_days=trading_days,
+            settings=settings,
+        )
+        if scored is None:
+            return None
+
+        ic_config = ICConfig(
+            minimum_security_count=settings.minimum_security_count,
+            horizons=[horizon],
+        )
+        ic_calculator = SpearmanICCalculator(config=ic_config)
+        signal_id = SignalId(entry_signal.signal_id)
+        rebalance_dates = _collect_rebalance_dates(
+            list(trading_days),
+            config.rebalance_frequency,
+        )
+
+        daily_ic_results: list[DailyICResult] = []
+        for evaluation_date in rebalance_dates:
+            date_scores = [
+                row for row in scored.factor_scores if row.evaluation_date == evaluation_date
+            ]
+            if not date_scores:
+                continue
+
+            security_ids = [security.security_id for security in config.securities]
+            date_forward_returns = self._forward_returns.calculate_for_universe(
+                security_ids=security_ids,
+                evaluation_date=evaluation_date,
+                horizon=horizon,
+                trading_days=list(trading_days),
+                data_access=data_access,
+            )
+            horizon_returns = {
+                row.security_id: row.forward_return
+                for row in date_forward_returns
+                if row.horizon == horizon
+            }
+            if not horizon_returns:
+                continue
+            daily_ic_results.append(
+                ic_calculator.calculate_daily_ic(
+                    date_scores,
+                    horizon_returns,
+                    evaluation_date,
+                    signal_id=signal_id,
+                    horizon=horizon,
+                )
+            )
+
+        if not daily_ic_results:
+            return None
+
+        summary = ic_calculator.summarize(
+            daily_ic_results,
+            signal_id=signal_id,
+            horizon=horizon,
+        )
+        return summary.mean_ic
 
     def _evaluate_date(
         self,

@@ -234,7 +234,12 @@ def test_experiment_runner_includes_factor_metrics_on_mag7(tmp_path: Path) -> No
     assert "entry_robustness" in report_text
     assert "factor_performance" in report_text
     assert result.factor_evaluation.entry_robustness is not None
-    assert result.factor_evaluation.factor_performance is not None
+    assert result.factor_evaluation.entry_robustness.rank_stability_score > Decimal("0")
+    assert result.factor_evaluation.entry_robustness.parameter_stability_score > Decimal("0")
+    assert result.factor_evaluation.robustness_pending_dimensions == [
+        "regime_stability",
+        "breadth_stability",
+    ]
 
 
 def test_experiment_runner_top_n_reduces_trades() -> None:

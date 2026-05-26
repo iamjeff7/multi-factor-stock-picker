@@ -143,6 +143,8 @@ def _entry_robustness_payload(factor_evaluation: FactorEvaluationResult) -> dict
         "ic_stability_score": str(robustness.ic_stability_score),
         "return_stability_score": str(robustness.return_stability_score),
         "sample_stability_score": str(robustness.sample_stability_score),
+        "rank_stability_score": str(robustness.rank_stability_score),
+        "parameter_stability_score": str(robustness.parameter_stability_score),
         "pending_dimensions": factor_evaluation.robustness_pending_dimensions,
     }
 

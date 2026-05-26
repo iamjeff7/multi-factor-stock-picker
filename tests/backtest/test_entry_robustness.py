@@ -5,10 +5,11 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from core.types import SecurityId, SignalId
 from backtest.entry_robustness import compute_partial_entry_robustness, resolve_ic_summary
+from core.types import SecurityId, SignalId, Ticker
 from factors.ic.sample_analysis import analyze_ic_by_sample
 from research.sample_split import compute_sample_split
+from schemas.factors import FactorScore
 from schemas.ic import DailyICResult, ForwardReturn, ICSummary
 
 
@@ -98,10 +99,72 @@ def test_compute_partial_entry_robustness_scores_available_dimensions() -> None:
     assert result is not None
     assert pending == [
         "regime_stability",
-        "parameter_stability",
-        "rank_stability",
         "breadth_stability",
+        "rank_stability",
+        "parameter_stability",
     ]
     assert Decimal("0") <= result.overall_robustness_score <= Decimal("1")
     assert result.regime_stability_score == Decimal("0")
     assert result.ic_stability_score > Decimal("0")
+
+
+def test_compute_partial_entry_robustness_scores_rank_stability_from_factor_scores() -> None:
+    evaluation_dates = [date(2020, 1, 31), date(2020, 2, 29), date(2020, 8, 31), date(2020, 9, 30)]
+    daily = [
+        _daily_ic(evaluation_date=evaluation_date, ic=Decimal("0.08"))
+        for evaluation_date in evaluation_dates
+    ]
+    forward_returns = [
+        ForwardReturn(
+            evaluation_date=evaluation_date,
+            security_id=SecurityId("SEC_AAPL"),
+            horizon=21,
+            forward_return=Decimal("0.03"),
+        )
+        for evaluation_date in evaluation_dates
+    ]
+    factor_scores = [
+        FactorScore(
+            evaluation_date=evaluation_date,
+            security_id=SecurityId(f"SEC_{index}"),
+            ticker=Ticker(f"T{index}"),
+            signal_id=SignalId("momentum_12_1"),
+            factor_score=Decimal(index) / Decimal("6"),
+        )
+        for evaluation_date in evaluation_dates
+        for index in range(7)
+    ]
+    split = compute_sample_split(
+        evaluation_dates,
+        calendar_start=evaluation_dates[0],
+        calendar_end=evaluation_dates[-1],
+    )
+    ic_summary = ICSummary(
+        signal_id=SignalId("momentum_12_1"),
+        horizon=21,
+        mean_ic=Decimal("0.08"),
+        median_ic=Decimal("0.08"),
+        std_ic=Decimal("0.01"),
+        ic_information_ratio=Decimal("8"),
+        hit_rate=Decimal("1"),
+        t_statistic=None,
+        p_value=None,
+        observation_count=4,
+    )
+
+    result, pending = compute_partial_entry_robustness(
+        signal_id=SignalId("momentum_12_1"),
+        horizon=21,
+        ic_summary=ic_summary,
+        daily_ic_results=daily,
+        forward_returns=forward_returns,
+        split=split,
+        factor_scores=factor_scores,
+        ic_analysis=None,
+    )
+
+    assert result is not None
+    assert "rank_stability" not in pending
+    assert result.rank_stability_score > Decimal("0")
+    assert "regime_stability" in pending
+    assert "breadth_stability" in pending
