@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from backtest.exit_robustness_models import ExitRobustnessEvaluation
 from backtest.factor_evaluation import FactorEvaluationResult
 from core.types import ExperimentId, SecurityId, Ticker
 from research.config import SampleSplitMetadata
@@ -38,6 +39,7 @@ class ExperimentRunResult(BaseModel):
     sample_split: SampleSplitMetadata | None = None
     degradation: SampleDegradationMetrics | None = None
     factor_evaluation: FactorEvaluationResult | None = None
+    exit_robustness: ExitRobustnessEvaluation | None = None
     report_path: str | None = None
 
     @property

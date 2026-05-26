@@ -11,6 +11,7 @@ from pathlib import Path
 
 from backtest.engine import SingleStockBacktestEngine
 from backtest.entry_policy import EntryPolicy, SignalPresentEntryPolicy, TopNEntryPolicy
+from backtest.exit_robustness import compute_partial_exit_robustness
 from backtest.experiment_config import SingleFactorExperimentConfig
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
 from backtest.factor_evaluation import SingleFactorFactorEvaluator
@@ -250,6 +251,12 @@ class SingleFactorExperimentRunner:
             )
         )
 
+        exit_robustness = compute_partial_exit_robustness(
+            all_trades,
+            split=sample_split,
+            exit_signal_id=exit_signal.metadata.signal_id,
+        )
+
         experiment_result = ExperimentRunResult(
             experiment_id=parent_experiment_id,
             stock_results=stock_results,
@@ -260,6 +267,7 @@ class SingleFactorExperimentRunner:
             sample_split=split_metadata,
             degradation=degradation,
             factor_evaluation=factor_evaluation,
+            exit_robustness=exit_robustness,
         )
 
         if store is not None:

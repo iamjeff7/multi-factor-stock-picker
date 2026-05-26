@@ -1,17 +1,16 @@
-**Current Task:** Task 27: Wire exit robustness into experiments
+**Current Task:** Task 28: Universe builder in experiment runner
 Status: in progress
 
 ## What's Done
-- Task 26: Rank + parameter entry robustness wired into experiments
-  - Rank stability from consecutive-date factor score correlations and top-group persistence
-  - Parameter stability from momentum lookback ±20% IC sweep
-  - Pending dimensions reduced to regime + breadth only
-  - Extended demo: rank ~0.86, parameter ~0.66, overall ACCEPTABLE
+- Task 27: Exit robustness wired into experiments
+  - `compute_partial_exit_robustness` scores performance, sample, holding period, trade distribution, and risk from closed trades
+  - IS/OOS sample stability from canonical split; regime and parameter pending
+  - `exit_robustness` section added to experiment report
 
 ## Next Steps
-1. Wire ExitRobustnessScorer from trade outcomes
-2. Add exit_robustness section to experiment report
+1. Replace hardcoded YAML security lists with `DefaultUniverseBuilder`
+2. Apply liquidity filters from universe config
 
 ## Context
-- Robustness weights renormalize over 5 active dimensions (ic, return, sample, rank, parameter)
-- Parameter sweep re-scores cross-section 3x (80%/100%/120% lookback) — noticeable runtime cost
+- Extended Mag7 demo exit robustness uses real momentum_exit_stack trade outcomes
+- Entry robustness score still persisted to Parquet; exit robustness is report-only for now

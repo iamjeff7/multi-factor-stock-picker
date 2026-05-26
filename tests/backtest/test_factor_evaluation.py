@@ -240,6 +240,10 @@ def test_experiment_runner_includes_factor_metrics_on_mag7(tmp_path: Path) -> No
         "regime_stability",
         "breadth_stability",
     ]
+    assert result.exit_robustness is not None
+    assert result.exit_robustness.result is not None
+    assert result.exit_robustness.result.performance_stability_score > Decimal("0")
+    assert "exit_robustness" in report_text
 
 
 def test_experiment_runner_top_n_reduces_trades() -> None:

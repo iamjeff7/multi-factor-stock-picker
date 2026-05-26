@@ -2,7 +2,7 @@
 - [x] Task 24: Extend research window / larger demo universe (meaningful IS/OOS IC)
 - [x] Task 25: Factor performance module (quantile spreads, long-short premia)
 - [x] Task 26: Complete entry robustness (rank + parameter stability first)
-- [ ] Task 27: Wire exit robustness into experiments
+- [x] Task 27: Wire exit robustness into experiments
 - [ ] Task 28: Universe builder in experiment runner
 - [ ] Task 29: Documentation (README experiment runs + report sections)
 - [ ] Task 30: Factor combination in multi-factor experiments

@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
+from backtest.exit_robustness_models import ExitRobustnessEvaluation
 from backtest.experiment_state import ExperimentRunResult, StockRunResult
 from backtest.factor_evaluation import FactorEvaluationResult
 from reporting.layout import ResultLayout
@@ -77,6 +78,8 @@ def build_experiment_report_payload(
         payload["factor_ic"] = _factor_ic_payload(result.factor_evaluation)
         payload["entry_robustness"] = _entry_robustness_payload(result.factor_evaluation)
         payload["factor_performance"] = _factor_performance_payload(result.factor_evaluation)
+    if result.exit_robustness is not None:
+        payload["exit_robustness"] = _exit_robustness_payload(result.exit_robustness)
     return payload
 
 
@@ -184,6 +187,31 @@ def _factor_performance_payload(
         "available": True,
         "full": performance.model_dump(mode="json"),
         "sample_metrics": None,
+    }
+
+
+def _exit_robustness_payload(
+    exit_robustness: ExitRobustnessEvaluation,
+) -> dict[str, object]:
+    result = exit_robustness.result
+    if result is None:
+        return {
+            "exit_signal_id": str(exit_robustness.exit_signal_id),
+            "available": False,
+            "pending_dimensions": exit_robustness.pending_dimensions,
+        }
+
+    return {
+        "exit_signal_id": str(result.exit_signal_id),
+        "available": True,
+        "overall_robustness_score": str(result.overall_robustness_score),
+        "robustness_classification": result.robustness_classification,
+        "performance_stability_score": str(result.performance_stability_score),
+        "sample_stability_score": str(result.sample_stability_score),
+        "holding_period_stability_score": str(result.holding_period_stability_score),
+        "trade_distribution_stability_score": str(result.trade_distribution_stability_score),
+        "risk_stability_score": str(result.risk_stability_score),
+        "pending_dimensions": exit_robustness.pending_dimensions,
     }
 
 
