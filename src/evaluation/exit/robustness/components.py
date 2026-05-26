@@ -56,7 +56,14 @@ def score_performance_stability(
         Decimal("1"),
     )
     return average(
-        [mean_score, median_score, win_score, profit_factor_score, expectancy_score, volatility_score]
+        [
+            mean_score,
+            median_score,
+            win_score,
+            profit_factor_score,
+            expectancy_score,
+            volatility_score,
+        ]
     )
 
 

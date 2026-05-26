@@ -204,3 +204,30 @@
 - Tasks Completed:
   - Factor pipeline (scoring, combination, IC, robustness)
   - IS/OOS validation framework and spec alignment
+
+## Session 8 — 2026-05-26 12:13:01
+
+- Goal: Complete demo experiment pipeline — universe builder, docs, multi-factor combination, and CI
+
+- What I Built:
+  - `src/backtest/universe_resolution.py` — resolve experiment securities from `DefaultUniverseBuilder`
+  - `src/backtest/multi_factor_experiment_config.py`, `factor_combination_flow.py`, `multi_factor_experiment_runner.py` — multi-factor experiments with weighted-mean composite ranks
+  - `src/backtest/composite_entry_signal.py` — top-N entry from precomputed composite scores
+  - `configs/experiments/mag7_momentum_12_1_universe.yaml`, `mag7_multi_momentum.yaml` — universe and multi-factor demo configs
+  - `scripts/run_multi_factor_experiment.py` — multi-factor experiment CLI
+  - `.github/workflows/ci.yml` — ruff, mypy, and full pytest on push/PR
+  - `README.md` — experiment run commands, output layout, and report section docs
+
+- Decisions Made:
+  - Universe resolution at `start_date`; `top_n` validated after resolve, not against `minimum_security_count`
+  - Multi-factor backtests use composite score lookup for entry; per-factor scores persisted separately
+  - Factor evaluation IC/robustness remains single-factor path; multi-factor runs focus on combination + top-N
+
+- What Didn't Work:
+  - Initial multi-factor tests failed on default `minimum_security_count=30` with Mag7 — fixed via demo config override to 7
+
+- Tasks Completed:
+  - Task 28: Universe builder in experiment runner
+  - Task 29: README experiment runs + report sections
+  - Task 30: Factor combination in multi-factor experiments
+  - Task 31: Housekeeping (DEVLOG, pyproject research package, CI)

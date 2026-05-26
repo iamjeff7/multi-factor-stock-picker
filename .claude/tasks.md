@@ -6,4 +6,4 @@
 - [x] Task 28: Universe builder in experiment runner
 - [x] Task 29: Documentation (README experiment runs + report sections)
 - [x] Task 30: Factor combination in multi-factor experiments
-- [ ] Task 31: Housekeeping (DEVLOG, pyproject research package, full pytest in CI)
+- [x] Task 31: Housekeeping (DEVLOG, pyproject research package, full pytest in CI)

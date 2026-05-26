@@ -4,13 +4,13 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from tests.factors.combination.conftest import make_factor_score
 
 from core.exceptions import ValidationError
 from core.types import SecurityId, Ticker
 from factors.combination.config import FactorCombinationConfig
 from factors.combination.validator import FactorCombinationValidator
 from schemas.factors import CompositeScore
-from tests.factors.combination.conftest import make_factor_score
 
 
 def _config() -> FactorCombinationConfig:

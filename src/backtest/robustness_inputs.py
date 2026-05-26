@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import date
 from decimal import Decimal
-
 from typing import TYPE_CHECKING
 
 from backtest.experiment_config import SingleFactorExperimentConfig

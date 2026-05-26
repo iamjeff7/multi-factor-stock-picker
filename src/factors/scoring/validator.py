@@ -118,7 +118,10 @@ class FactorScoringValidator:
                 )
                 continue
 
-            if row.factor_score < config.score_range.min or row.factor_score > config.score_range.max:
+            if (
+                row.factor_score < config.score_range.min
+                or row.factor_score > config.score_range.max
+            ):
                 issues.append(
                     ValidationIssue(
                         check_name="factor_score_out_of_range",

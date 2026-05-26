@@ -26,7 +26,9 @@ def summarize_ic_series(
     mean_ic = sum(values, start=Decimal("0")) / Decimal(observation_count)
     median_ic = _median(values)
     std_ic = _sample_std(values, mean_ic)
-    ic_information_ratio = mean_ic / std_ic if std_ic not in (None, Decimal("0")) else None
+    ic_information_ratio = (
+        mean_ic / std_ic if std_ic is not None and std_ic != Decimal("0") else None
+    )
     hit_rate = Decimal(
         sum(1 for value in values if value > Decimal("0"))
     ) / Decimal(observation_count)
@@ -82,7 +84,7 @@ def _t_test_mean(
     mean_value: Decimal,
     std_value: Decimal | None,
 ) -> tuple[Decimal | None, Decimal | None]:
-    if std_value in (None, Decimal("0")) or len(values) < 2:
+    if std_value is None or std_value == Decimal("0") or len(values) < 2:
         return None, None
 
     t_stat = mean_value / (std_value / Decimal(len(values)).sqrt())

@@ -4,13 +4,12 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from tests.factors.ic.conftest import make_factor_score, make_forward_return
 
 from core.exceptions import ValidationError
 from core.types import SecurityId, SignalId
 from factors.ic.calculator import SpearmanICCalculator
 from factors.ic.config import ICConfig
-from schemas.ic import DailyICResult
-from tests.factors.ic.conftest import make_factor_score, make_forward_return
 
 
 def _spec_example_scores() -> list:

@@ -7,8 +7,10 @@ from research.sample_split import (
     classify_date,
     collect_trading_days_from_data,
     compute_sample_split,
-    filter_trades_by_period as filter_trades,
     split_to_metadata,
+)
+from research.sample_split import (
+    filter_trades_by_period as filter_trades,
 )
 from research.validator import validate_research_settings
 

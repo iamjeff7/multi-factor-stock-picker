@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from evaluation.robustness.classification import classify_robustness_score
-from evaluation.robustness.normalize import quantize_score
 from evaluation.robustness.components import (
     score_breadth_stability,
     score_ic_stability,
@@ -14,6 +13,7 @@ from evaluation.robustness.components import (
     score_sample_stability,
 )
 from evaluation.robustness.config import EntryRobustnessConfig
+from evaluation.robustness.normalize import quantize_score
 from evaluation.robustness.validator import EntryRobustnessValidator
 from schemas.robustness import EntryRobustnessInputs, EntryRobustnessResult
 

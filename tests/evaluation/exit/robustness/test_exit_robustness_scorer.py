@@ -3,6 +3,10 @@
 from decimal import Decimal
 
 import pytest
+from tests.evaluation.exit.robustness.conftest import (
+    strong_exit_robustness_inputs,
+    weak_exit_robustness_inputs,
+)
 
 from core.types import ExperimentId
 from evaluation.exit.robustness.config import ExitComponentWeights, ExitRobustnessConfig
@@ -11,10 +15,6 @@ from evaluation.exit.robustness.scorer import ExitRobustnessScorer
 from evaluation.robustness.enums import RobustnessClassification
 from evaluation.robustness.normalize import quantize_score
 from schemas.enums import RobustnessGrade
-from tests.evaluation.exit.robustness.conftest import (
-    strong_exit_robustness_inputs,
-    weak_exit_robustness_inputs,
-)
 
 
 def test_strong_exit_signal_receives_high_overall_score() -> None:

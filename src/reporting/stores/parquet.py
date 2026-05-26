@@ -136,7 +136,11 @@ class ParquetResultStore:
         return summaries[0]
 
     def load_experiment_summaries(self, experiment_id: str) -> list[ExperimentSummaryRecord]:
-        return self._read_rows(experiment_id, ResultLayout.EXPERIMENT_SUMMARY, ExperimentSummaryRecord)
+        return self._read_rows(
+            experiment_id,
+            ResultLayout.EXPERIMENT_SUMMARY,
+            ExperimentSummaryRecord,
+        )
 
     def load_trades(self, experiment_id: str) -> list[TradeRecord]:
         return self._read_rows(experiment_id, ResultLayout.TRADES_FILE, TradeRecord)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from core.enums import ResearchPhase, ResearchMode, SampleScope
+from core.enums import ResearchMode, ResearchPhase, SampleScope
 from research.config import ResearchSettings
 from research.sample_split import SampleSplit, last_completed_calendar_year_end
 

@@ -7,12 +7,12 @@ from decimal import Decimal
 
 from core.enums import SamplePeriod
 from core.types import SignalId
-from factors.ic.aggregates import summarize_forward_returns, summarize_ic_series
+from factors.ic.aggregates import summarize_ic_series
 from research.sample_split import SampleSplit, classify_date
 from schemas.ic import (
     DailyICResult,
-    ICDegradationMetrics,
     ForwardReturn,
+    ICDegradationMetrics,
     ICSampleAnalysis,
     ICSummary,
 )

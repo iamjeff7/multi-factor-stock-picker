@@ -1,19 +1,14 @@
-**Current Task:** Task 30: Factor combination in multi-factor experiments
-Status: Complete
+**Current Task:** All tasks complete
 
 ## What's Done
-- `MultiFactorExperimentConfig` with `entry_signals`, `factor_combination`, and shared universe/top_n settings
-- `score_and_combine_multi_factor()` scores each factor and combines via `WeightedMeanFactorCombiner`
-- `MultiFactorExperimentRunner` uses composite scores for top-N entry and persists composite + factor score Parquet
-- `factor_combination` section added to experiment report
-- Demo config `mag7_multi_momentum.yaml` and `scripts/run_multi_factor_experiment.py`
-- Tests in `tests/backtest/test_multi_factor_experiment.py` (3 passing)
-- README updated with multi-factor run command
+- Tasks 28–31 complete
+- CI: `.github/workflows/ci.yml` runs ruff, mypy, pytest tests/
+- pyproject.toml includes `research` and `evaluation/exit/robustness` packages
+- DEVLOG Session 8 appended
 
 ## Next Steps
-1. Commit changes
-2. Task 31: Housekeeping (DEVLOG, pyproject, CI)
+1. Push branch (8 commits ahead of origin/main)
 
 ## Context
-- Composite entry uses precomputed composite scores via `CompositeScoreEntrySignal`
-- Demo: 84 composite scores across 12 rebalance dates for Mag7 2023 window
+- Full test suite: 198 tests passing
+- All tasks in `.claude/tasks.md` checked off

@@ -7,7 +7,7 @@ from datetime import date
 from decimal import Decimal
 
 from factors.scoring.config import FactorScoringConfig
-from factors.scoring.enums import ScoringMissingDataPolicy, ScoringMethod
+from factors.scoring.enums import ScoringMethod, ScoringMissingDataPolicy
 from factors.scoring.preprocessing import winsorize_observations
 from factors.scoring.ranking import RankObservation, percentile_rank_scores
 from factors.scoring.validator import FactorScoringValidator, is_valid_observation

@@ -4,15 +4,14 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from tests.factors.scoring.conftest import make_entry_signal_result, make_minimum_cross_section
 
 from core.exceptions import ValidationError
 from core.types import SecurityId, SignalId, Ticker
 from factors.scoring.config import FactorScoringConfig
 from factors.scoring.validator import FactorScoringValidator
-from schemas.entry import EntrySignalResult
 from schemas.enums import SignalDirection
 from schemas.factors import FactorScore
-from tests.factors.scoring.conftest import make_entry_signal_result, make_minimum_cross_section
 
 
 def test_insufficient_sample_fails_validation() -> None:

@@ -3,8 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from core.types import SecurityId, Ticker
-from data.protocols import DataAccess
+from core.types import SecurityId
 from factors.ic.forward_returns import ForwardReturnCalculator, build_trading_calendar
 from schemas.data import PriceBar
 

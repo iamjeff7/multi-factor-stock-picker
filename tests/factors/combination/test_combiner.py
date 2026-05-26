@@ -4,12 +4,12 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from tests.factors.combination.conftest import make_factor_score, make_multi_factor_scores
 
 from core.exceptions import ValidationError
 from factors.combination.combiner import WeightedMeanFactorCombiner
 from factors.combination.config import FactorCombinationConfig
 from factors.combination.enums import MissingFactorPolicy, WeightingMethod
-from tests.factors.combination.conftest import make_factor_score, make_multi_factor_scores
 
 
 def _default_config(**overrides: object) -> FactorCombinationConfig:

@@ -125,8 +125,12 @@ def _calculate_composite(
         return None
 
     ticker = next(iter(security_scores.values())).ticker
-    available_factors = [signal_id for signal_id in enabled_factors if signal_id in security_scores]
-    missing_factors = [signal_id for signal_id in enabled_factors if signal_id not in security_scores]
+    available_factors = [
+        signal_id for signal_id in enabled_factors if signal_id in security_scores
+    ]
+    missing_factors = [
+        signal_id for signal_id in enabled_factors if signal_id not in security_scores
+    ]
 
     if config.missing_factor_policy == MissingFactorPolicy.EXCLUDE_SECURITY and missing_factors:
         return None

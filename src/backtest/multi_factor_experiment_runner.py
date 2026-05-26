@@ -47,7 +47,7 @@ from research.sample_split import (
 )
 from research.validator import validate_research_settings
 from schemas.backtest import Trade
-from schemas.factors import CompositeScore
+from schemas.factors import CompositeScore, FactorScore
 from schemas.results import (
     BacktestSummaryRecord,
     CompositeScoreRecord,
@@ -460,7 +460,7 @@ class MultiFactorExperimentRunner:
 
 def _to_factor_score_records(
     experiment_id: ExperimentId,
-    factor_scores: list,
+    factor_scores: list[FactorScore],
 ) -> list[FactorScoreRecord]:
     return [
         FactorScoreRecord(

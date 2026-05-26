@@ -6,13 +6,13 @@ from collections.abc import Sequence
 from decimal import Decimal
 
 from core.enums import SamplePeriod
+from core.types import SignalId
 from factors.ic.aggregates import summarize_forward_returns
 from factors.ic.sample_analysis import (
     analyze_ic_by_sample,
     filter_forward_returns_by_period,
 )
 from research.sample_split import SampleSplit
-from core.types import SignalId
 from schemas.ic import DailyICResult, ForwardReturn, ICSampleAnalysis
 from schemas.robustness import SamplePeriodMetrics, SampleStabilityInput
 

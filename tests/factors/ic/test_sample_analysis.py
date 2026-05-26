@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from tests.factors.ic.conftest import make_forward_return
 
 from core.enums import SamplePeriod
 from core.types import SignalId
@@ -12,7 +13,6 @@ from factors.ic.config import ICConfig
 from factors.ic.sample_analysis import analyze_ic_by_sample, compute_ic_degradation
 from research.sample_split import compute_sample_split
 from schemas.ic import DailyICResult, ICSummary
-from tests.factors.ic.conftest import make_forward_return
 
 
 def _daily_ic(evaluation_date: date, ic: Decimal) -> DailyICResult:

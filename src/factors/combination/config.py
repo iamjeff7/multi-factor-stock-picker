@@ -30,7 +30,11 @@ class FactorCombinationConfig(BaseModel):
     weighting_method: WeightingMethod = WeightingMethod.EQUAL_WEIGHT
     factor_weights: dict[str, Decimal] = Field(default_factory=dict)
     missing_factor_policy: MissingFactorPolicy = MissingFactorPolicy.IGNORE_MISSING_FACTOR
-    minimum_factor_coverage_pct: Decimal = Field(default=Decimal("0.50"), ge=Decimal("0"), le=Decimal("1"))
+    minimum_factor_coverage_pct: Decimal = Field(
+        default=Decimal("0.50"),
+        ge=Decimal("0"),
+        le=Decimal("1"),
+    )
     score_range: ScoreRange = Field(default_factory=ScoreRange)
 
     @model_validator(mode="after")

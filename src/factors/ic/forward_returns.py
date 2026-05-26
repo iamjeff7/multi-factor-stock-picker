@@ -10,6 +10,7 @@ from backtest.calendar import next_trading_day
 from core.types import SecurityId
 from data.protocols import DataAccess
 from entry_signals.validator import is_finite_decimal
+from schemas.data import PriceBar
 from schemas.ic import ForwardReturn
 
 
@@ -127,7 +128,7 @@ def _get_price_bar(
     security_id: SecurityId,
     trade_date: date,
     as_of_date: date,
-):
+) -> PriceBar | None:
     bars = data_access.get_prices(
         security_id=security_id,
         start_date=trade_date,

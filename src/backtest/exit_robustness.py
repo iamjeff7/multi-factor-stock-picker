@@ -216,7 +216,8 @@ def _build_trade_distribution_stability(
     sorted_contributions = sorted(contributions, reverse=True)
     top_trade_contribution_ratio = sorted_contributions[0] / total_contribution
     herfindahl = sum(
-        (value / total_contribution) ** 2 for value in contributions
+        ((value / total_contribution) ** 2 for value in contributions),
+        start=Decimal("0"),
     )
     gross_wins = sum(
         ((trade.net_pnl or Decimal("0")) for trade in winners),

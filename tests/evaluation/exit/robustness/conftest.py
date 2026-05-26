@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from core.types import SignalId
 from core.enums import SamplePeriod
+from core.types import SignalId
 from schemas.exit_robustness import (
     ExitParameterStabilityInput,
     ExitRegimeMetrics,
@@ -21,7 +21,10 @@ from schemas.exit_robustness import (
 )
 
 
-def strong_exit_robustness_inputs(*, exit_signal_id: str = "trailing_stop_10pct") -> ExitRobustnessInputs:
+def strong_exit_robustness_inputs(
+    *,
+    exit_signal_id: str = "trailing_stop_10pct",
+) -> ExitRobustnessInputs:
     return ExitRobustnessInputs(
         exit_signal_id=SignalId(exit_signal_id),
         performance_stability=PerformanceStabilityInput(

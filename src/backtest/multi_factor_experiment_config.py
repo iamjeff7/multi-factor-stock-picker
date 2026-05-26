@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from pydantic import Field, model_validator
 
+from backtest.config import SingleStockBacktestConfig
 from backtest.experiment_config import ExperimentSecurity, SignalConfig
 from backtest.factor_evaluation_config import FactorEvaluationSettings
 from config.models import BacktestSettings, UniverseSettings
@@ -71,9 +72,7 @@ class MultiFactorExperimentConfig(BacktestSettings):
     def entry_signal_ids(self) -> tuple[SignalId, ...]:
         return tuple(SignalId(signal.name) for signal in self.entry_signals)
 
-    def to_stock_config(self, security: ExperimentSecurity):
-        from backtest.config import SingleStockBacktestConfig
-
+    def to_stock_config(self, security: ExperimentSecurity) -> SingleStockBacktestConfig:
         return SingleStockBacktestConfig(
             security_id=security.security_id,
             ticker=security.ticker,

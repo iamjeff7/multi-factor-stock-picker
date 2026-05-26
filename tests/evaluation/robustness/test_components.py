@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 
+from core.enums import SamplePeriod
 from evaluation.robustness.components import (
     score_breadth_stability,
     score_ic_stability,
@@ -11,7 +12,6 @@ from evaluation.robustness.components import (
     score_return_stability,
     score_sample_stability,
 )
-from core.enums import SamplePeriod
 from evaluation.robustness.config import EntryRobustnessConfig
 from schemas.robustness import (
     BreadthStabilityInput,

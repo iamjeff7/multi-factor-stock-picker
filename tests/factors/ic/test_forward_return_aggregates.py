@@ -3,8 +3,9 @@
 from datetime import date
 from decimal import Decimal
 
-from factors.ic.aggregates import summarize_forward_returns
 from tests.factors.ic.conftest import make_forward_return
+
+from factors.ic.aggregates import summarize_forward_returns
 
 
 def test_summarize_forward_returns() -> None:

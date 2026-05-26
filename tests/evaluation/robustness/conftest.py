@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from core.types import SignalId
 from core.enums import SamplePeriod
+from core.types import SignalId
 from schemas.robustness import (
     BreadthStabilityInput,
     EntryRobustnessInputs,

@@ -3,10 +3,11 @@
 from datetime import date
 from decimal import Decimal
 
+from tests.factors.scoring.conftest import make_cross_section
+
 from factors.scoring.config import FactorScoringConfig
 from factors.scoring.scorer import PercentileRankFactorScorer
 from schemas.enums import SignalDirection
-from tests.factors.scoring.conftest import make_cross_section
 
 
 def test_tied_values_receive_equal_scores() -> None:
