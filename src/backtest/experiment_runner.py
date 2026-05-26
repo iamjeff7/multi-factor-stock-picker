@@ -17,6 +17,7 @@ from backtest.experiment_state import ExperimentRunResult, StockRunResult
 from backtest.factor_evaluation import SingleFactorFactorEvaluator
 from backtest.portfolio_selection import build_top_n_selections
 from backtest.statistics import DefaultPerformanceCalculator
+from backtest.universe_resolution import with_resolved_securities
 from core.enums import ExperimentStatus, ExperimentType, SamplePeriod
 from core.exceptions import ValidationError
 from core.types import ConfigurationHash, DataVersion, ExperimentId, UniverseVersion
@@ -80,6 +81,7 @@ class SingleFactorExperimentRunner:
         output_dir: Path | None = None,
         experiment_id: ExperimentId | None = None,
     ) -> ExperimentRunResult:
+        config = with_resolved_securities(config, data_access)
         parent_experiment_id = experiment_id or ExperimentId(f"exp_{uuid.uuid4().hex[:12]}")
         store = result_store or self._build_result_store(output_dir)
 

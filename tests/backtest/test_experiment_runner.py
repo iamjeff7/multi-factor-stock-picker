@@ -2,6 +2,7 @@
 
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
@@ -10,15 +11,21 @@ from backtest.experiment_config import (
     SignalConfig,
     SingleFactorExperimentConfig,
 )
-from core.enums import PortfolioMode, PositionSizeMethod, RebalanceFrequency, ResearchMode, ResearchPhase, SampleScope
-from core.types import SecurityId, Ticker
-from research.config import ResearchSettings
 from backtest.experiment_runner import SingleFactorExperimentRunner
-from core.enums import SamplePeriod
+from core.enums import (
+    PortfolioMode,
+    PositionSizeMethod,
+    RebalanceFrequency,
+    ResearchMode,
+    ResearchPhase,
+    SamplePeriod,
+    SampleScope,
+)
+from core.types import SecurityId, Ticker
 from entry_signals.examples.stub_entry_signal import ExampleStubEntrySignal
 from exit_signals.examples.stub_exit_signal import ExampleStubExitSignal
 from reporting.stores import ParquetResultStore
-from pathlib import Path
+from research.config import ResearchSettings
 
 
 def test_experiment_runner_resets_capital_per_stock(rising_price_access, tmp_path: Path) -> None:
@@ -71,6 +78,23 @@ def test_experiment_runner_resets_capital_per_stock(rising_price_access, tmp_pat
     summaries = parquet_store.load_experiment_summaries(experiment_id)
     assert len(summaries) == 3
     assert (tmp_path / experiment_id / "reports" / "experiment_report.json").exists()
+
+
+def test_experiment_config_rejects_empty_securities_without_universe() -> None:
+    with pytest.raises(ValueError, match="Provide securities or universe settings"):
+        SingleFactorExperimentConfig(
+            experiment_name="missing_universe",
+            start_date=date(2020, 1, 2),
+            end_date=date(2020, 1, 8),
+            portfolio_mode=PortfolioMode.SINGLE,
+            entry_signal=SignalConfig(name="example_stub"),
+            exit_signal=SignalConfig(name="example_stub_exit"),
+            research=ResearchSettings(
+                research_mode=ResearchMode.TEST,
+                research_phase=ResearchPhase.VALIDATION,
+                sample_scope=SampleScope.FULL,
+            ),
+        )
 
 
 def test_experiment_config_rejects_discovery_with_full_scope() -> None:

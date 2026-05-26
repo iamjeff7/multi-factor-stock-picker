@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from backtest.config import SingleStockBacktestConfig
 from backtest.factor_evaluation_config import FactorEvaluationSettings
-from config.models import BacktestSettings
+from config.models import BacktestSettings, UniverseSettings
 from core.enums import PortfolioMode
 from core.types import SecurityId, Ticker
 from research.config import ResearchSettings
@@ -32,6 +32,7 @@ class SingleFactorExperimentConfig(BacktestSettings):
     start_date: date
     end_date: date
     securities: list[ExperimentSecurity] = Field(default_factory=list)
+    universe: UniverseSettings | None = None
     fixed_dollar_amount: Decimal | None = None
     entry_signal: SignalConfig
     exit_signal: SignalConfig
@@ -45,12 +46,12 @@ class SingleFactorExperimentConfig(BacktestSettings):
             raise ValueError("Single-factor experiments require portfolio_mode=SINGLE")
         if self.end_date < self.start_date:
             raise ValueError("end_date must be on or after start_date")
-        if not self.securities:
-            raise ValueError("At least one security is required")
+        if self.universe is None and not self.securities:
+            raise ValueError("Provide securities or universe settings")
         if self.top_n is not None:
             if self.top_n < 1:
                 raise ValueError("top_n must be at least 1")
-            if self.top_n > len(self.securities):
+            if self.universe is None and self.top_n > len(self.securities):
                 raise ValueError("top_n cannot exceed the number of securities")
 
         from research.validator import validate_research_settings
