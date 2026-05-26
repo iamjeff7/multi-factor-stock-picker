@@ -289,3 +289,53 @@ def test_experiment_runner_top_n_reduces_trades() -> None:
         restricted.experiment_summary.number_of_trades
         < unrestricted.experiment_summary.number_of_trades
     )
+
+
+def test_extended_window_produces_is_oos_ic_on_mag7() -> None:
+    fixture_dir = Path(__file__).resolve().parents[1] / "fixtures" / "data" / "mag7"
+    if not fixture_dir.exists():
+        pytest.skip("Mag7 fixture unavailable")
+
+    config = SingleFactorExperimentConfig(
+        experiment_name="mag7_extended_ic",
+        start_date=date(2020, 1, 2),
+        end_date=date(2024, 12, 31),
+        initial_capital=100_000,
+        rebalance_frequency=RebalanceFrequency.MONTHLY,
+        portfolio_mode=PortfolioMode.SINGLE,
+        position_size_method=PositionSizeMethod.EQUAL_WEIGHT,
+        top_n=2,
+        securities=[
+            ExperimentSecurity(security_id=SecurityId("SEC_AAPL"), ticker=Ticker("AAPL")),
+            ExperimentSecurity(security_id=SecurityId("SEC_MSFT"), ticker=Ticker("MSFT")),
+            ExperimentSecurity(security_id=SecurityId("SEC_GOOGL"), ticker=Ticker("GOOGL")),
+            ExperimentSecurity(security_id=SecurityId("SEC_AMZN"), ticker=Ticker("AMZN")),
+            ExperimentSecurity(security_id=SecurityId("SEC_META"), ticker=Ticker("META")),
+            ExperimentSecurity(security_id=SecurityId("SEC_NVDA"), ticker=Ticker("NVDA")),
+            ExperimentSecurity(security_id=SecurityId("SEC_TSLA"), ticker=Ticker("TSLA")),
+        ],
+        entry_signal=SignalConfig(name="momentum_12_1"),
+        exit_signal=SignalConfig(name="example_stub_exit", params={"max_holding_days": 63}),
+        research=ResearchSettings(
+            research_mode=ResearchMode.DEMO,
+            research_phase=ResearchPhase.VALIDATION,
+            sample_scope=SampleScope.FULL,
+        ),
+        factor_evaluation=FactorEvaluationSettings(
+            minimum_security_count=7,
+            primary_horizon=63,
+            horizons=[21, 63],
+        ),
+    )
+    store = InMemoryDataStore(ParquetLoader().load(fixture_dir))
+    result = SingleFactorExperimentRunner().run(
+        config=config,
+        data_access=store,
+        entry_signal=Momentum12_1EntrySignal(),
+        exit_signal=ExampleStubExitSignal(max_holding_days=63),
+    )
+
+    assert result.factor_evaluation is not None
+    assert result.factor_evaluation.ic_analysis is not None
+    assert result.factor_evaluation.entry_robustness is not None
+    assert result.factor_evaluation.entry_robustness.sample_stability_score > Decimal("0")

@@ -1,18 +1,18 @@
-**Current Task:** Task 24: Extend research window / larger demo universe
+**Current Task:** Task 25: Factor performance module
 Status: in progress
 
 ## What's Done
-- Task 23: Top-N entry policy wired to factor scores
-  - `TopNEntryPolicy`, `build_top_n_selections`, `score_cross_section` reuse
-  - Experiment runner scores cross-section before backtest when `top_n` or factor eval enabled
-  - Mag7 configs updated with `top_n: 2`
-  - Tests pass (10 backtest tests)
+- Task 23 committed (3d543d2): Top-N entry policy
+- Task 24: Extended research window for meaningful IS/OOS IC
+  - Added `mag7_momentum_12_1_extended.yaml` and `mag7_momentum_6_1_extended.yaml` (2020–2024)
+  - Short Mag7 configs now include 21d + 63d IC horizons
+  - Extended window produces IS/OOS IC and non-zero sample stability (~0.98)
 
 ## Next Steps
-1. Extend Mag7 date range or add broader security fixture (≥30 names)
-2. Add 21d IC horizon alongside 63d in demo configs
-3. Verify IS/OOS IC split produces non-zero sample stability
+1. Implement quantile spread / long-short performance per spec
+2. Add `factor_performance` section to experiment report
 
 ## Context
-- Top-N filters entries per rebalance date; each stock still runs an isolated single-position backtest
-- `score_cross_section` results are reused by full factor evaluation to avoid duplicate scoring
+- Mag7 fixture already spans 2018–2026; 1-year demo configs kept for fast runs
+- Extended configs use 60 monthly rebalance dates vs 12 in the 2023-only window
+- Broader ≥30-name universe deferred; extended dates satisfy Task 24 acceptance criteria

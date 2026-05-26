@@ -1,6 +1,6 @@
-experiment_name: mag7_momentum_12_1
-start_date: 2023-01-03
-end_date: 2023-12-29
+experiment_name: mag7_momentum_6_1_extended
+start_date: 2020-01-02
+end_date: 2024-12-31
 initial_capital: 100000
 slippage_pct: 0.001
 commission_pct: 0.0
@@ -37,9 +37,9 @@ securities:
     ticker: TSLA
 
 entry_signal:
-  name: momentum_12_1
+  name: momentum_6_1
   params:
-    lookback_days: 252
+    lookback_days: 126
     skip_days: 21
 
 exit_signal:

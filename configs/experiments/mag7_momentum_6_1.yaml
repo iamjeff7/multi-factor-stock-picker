@@ -18,7 +18,7 @@ factor_evaluation:
   enabled: true
   minimum_security_count: 7
   primary_horizon: 63
-  horizons: [63]
+  horizons: [21, 63]
 
 securities:
   - security_id: SEC_AAPL
