@@ -13,6 +13,20 @@ entry:
   exit_horizons_months: [3]
   forward_window_trading_months: 6
 
+factor_evaluation:
+  enabled: true
+  minimum_security_count: 30
+  primary_horizon: 63
+  horizons: [21, 63]
+  compute_robustness: true
+  performance:
+    enabled: true
+
+research:
+  research_mode: DEMO
+  research_phase: VALIDATION
+  sample_scope: FULL
+
 ranking:
   qualifying_percentile: 95
   min_qualifying_factors: 1

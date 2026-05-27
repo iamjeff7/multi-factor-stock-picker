@@ -11,6 +11,12 @@ position_size_method: EQUAL_WEIGHT
 exit:
   entry_evaluation_mode: fixed_period
   entry_cadence: week
+  compute_robustness: true
+
+research:
+  research_mode: DEMO
+  research_phase: VALIDATION
+  sample_scope: FULL
 
 ranking:
   qualifying_percentile: 95

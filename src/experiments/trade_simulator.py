@@ -30,7 +30,6 @@ from schemas.enums import ExitDecision
 from schemas.exit import PositionContext
 from schemas.universe import UniverseMembership, UniverseMembershipSnapshot, UniverseMetadata
 
-
 FORWARD_TRADING_DAYS_6M = 126
 POSITION_CAPITAL_FRACTION = Decimal("0.20")
 

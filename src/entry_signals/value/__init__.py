@@ -1,1 +1,0 @@
-"""Value entry signal implementations."""

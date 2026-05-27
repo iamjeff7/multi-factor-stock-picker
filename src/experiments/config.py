@@ -9,8 +9,9 @@ from pathlib import Path
 from pydantic import BaseModel, Field, model_validator
 
 from backtest.experiment_config import ExperimentSecurity
+from backtest.factor_evaluation_config import FactorEvaluationSettings
 from config.models import BacktestSettings, UniverseSettings
-from core.enums import PortfolioMode
+from core.enums import PortfolioMode, ResearchMode, ResearchPhase, SampleScope
 from experiments.enums import (
     DataPreset,
     EntryCadence,
@@ -19,6 +20,7 @@ from experiments.enums import (
     ExperimentMode,
 )
 from experiments.ranking import DEFAULT_QUALIFYING_PERCENTILE
+from research.config import ResearchSettings
 
 
 class RankingSettings(BaseModel):
@@ -36,6 +38,7 @@ class EntryExperimentSettings(BaseModel):
 class ExitExperimentSettings(BaseModel):
     entry_evaluation_mode: EntryEvaluationMode = EntryEvaluationMode.FIXED_PERIOD
     entry_cadence: EntryCadence = EntryCadence.WEEK
+    compute_robustness: bool = True
 
 
 class CombinedExperimentSettings(BaseModel):
@@ -57,6 +60,22 @@ class UnifiedExperimentConfig(BacktestSettings):
     exit: ExitExperimentSettings = Field(default_factory=ExitExperimentSettings)
     combined: CombinedExperimentSettings = Field(default_factory=CombinedExperimentSettings)
     ranking: RankingSettings = Field(default_factory=RankingSettings)
+    research: ResearchSettings = Field(
+        default_factory=lambda: ResearchSettings(
+            research_mode=ResearchMode.DEMO,
+            research_phase=ResearchPhase.VALIDATION,
+            sample_scope=SampleScope.FULL,
+        )
+    )
+    factor_evaluation: FactorEvaluationSettings = Field(
+        default_factory=lambda: FactorEvaluationSettings(
+            enabled=True,
+            minimum_security_count=30,
+            primary_horizon=63,
+            horizons=[21, 63],
+            compute_robustness=True,
+        )
+    )
 
     @model_validator(mode="after")
     def validate_mode(self) -> UnifiedExperimentConfig:

@@ -34,6 +34,7 @@ def test_rank_factors_uses_percentile_threshold() -> None:
                     trades_per_trading_year=Decimal("10"),
                 ),
                 Decimal("0.8"),
+                None,
             )
         )
 

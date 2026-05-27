@@ -13,14 +13,16 @@ from data.protocols import DataAccess
 from experiments.config import UnifiedExperimentConfig
 from experiments.data_presets import resolve_data_preset
 from experiments.enums import ExitEvaluationMode
+from experiments.evaluation import UnifiedFactorEvaluator
+from experiments.evaluation.summary import build_entry_evaluation_summary
 from experiments.metrics import PerformanceMetrics, aggregate_metrics
-from experiments.ranking import FactorVariantRef, rank_factors_in_segment
+from experiments.ranking import FactorVariantRef, RankCandidate, rank_factors_in_segment
 from experiments.reporting import (
     build_entry_report_payload,
     build_rankings_payload,
     default_metric_weights,
     metrics_dict,
-    placeholder_robustness,
+    robustness_dict,
     write_json,
 )
 from experiments.resolution import resolve_unified_config
@@ -31,6 +33,9 @@ from reporting.layout import ResultLayout
 
 
 class EntryExperimentRunner:
+    def __init__(self, *, factor_evaluator: UnifiedFactorEvaluator | None = None) -> None:
+        self._factor_evaluator = factor_evaluator or UnifiedFactorEvaluator()
+
     def run(
         self,
         config: UnifiedExperimentConfig,
@@ -72,14 +77,31 @@ class EntryExperimentRunner:
 
         horizons = config.entry.exit_horizons_months
         factor_results: list[dict[str, object]] = []
-        segment_candidates: dict[
-            str, list[tuple[FactorVariantRef, PerformanceMetrics, Decimal | None]]
-        ] = defaultdict(list)
+        segment_candidates: dict[str, list[RankCandidate]] = defaultdict(list)
         segment_labels_by_key: dict[str, SegmentLabels] = {}
 
         for variant in list_entry_variants():
             entry_signal = build_entry_signal(variant)
             for horizon in horizons:
+                cross_section = self._factor_evaluator.evaluate_entry_variant(
+                    config=config,
+                    data_access=data_access,
+                    variant=variant,
+                    entry_signal=entry_signal,
+                    exit_horizon_months=horizon,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+                variant_robustness = cross_section.robustness_score
+                variant_robustness_payload = robustness_dict(
+                    score=variant_robustness,
+                    grade=cross_section.robustness_grade,
+                    available=cross_section.status == "completed",
+                )
+                evaluation_summary = build_entry_evaluation_summary(
+                    cross_section.cross_section_payload
+                )
+
                 per_stock_payload: list[dict[str, object]] = []
                 stock_metrics: list[PerformanceMetrics] = []
                 for security in config.securities:
@@ -103,17 +125,13 @@ class EntryExperimentRunner:
                         initial_capital=initial_capital,
                     )
                     stock_metrics.append(metrics)
-                    robustness_score, grade = placeholder_robustness()
                     per_stock_payload.append(
                         {
                             "security_id": str(security.security_id),
                             "ticker": str(security.ticker),
                             "status": "completed",
                             "metrics": metrics_dict(metrics),
-                            "robustness": {
-                                "overall_robustness_score": str(robustness_score),
-                                "overall_grade": grade.value,
-                            },
+                            "robustness": variant_robustness_payload,
                         }
                     )
                     segment_key = segment_labels_by_security[str(security.security_id)].key()
@@ -128,25 +146,23 @@ class EntryExperimentRunner:
                                 exit_horizon_months=horizon,
                             ),
                             metrics,
-                            robustness_score,
+                            variant_robustness,
+                            evaluation_summary,
                         )
                     )
 
                 aggregate = aggregate_metrics(stock_metrics)
-                aggregate_robustness, aggregate_grade = placeholder_robustness()
                 factor_results.append(
                     {
                         "signal_id": variant.signal_id,
                         "variant_id": variant.variant_id,
                         "signal_version": "1.0",
                         "exit_horizon_months": horizon,
+                        "cross_section": cross_section.cross_section_payload,
                         "per_stock": per_stock_payload,
                         "aggregate": {
                             "metrics": metrics_dict(aggregate),
-                            "robustness": {
-                                "overall_robustness_score": str(aggregate_robustness),
-                                "overall_grade": aggregate_grade.value,
-                            },
+                            "robustness": variant_robustness_payload,
                         },
                     }
                 )
@@ -191,6 +207,7 @@ class EntryExperimentRunner:
             "allow_look_ahead": (
                 config.entry.exit_evaluation_mode is ExitEvaluationMode.BEST_WITHIN_FIXED_PERIOD
             ),
+            "factor_evaluation_enabled": config.factor_evaluation.enabled,
         }
         report_payload = build_entry_report_payload(
             experiment_id=str(experiment_id),

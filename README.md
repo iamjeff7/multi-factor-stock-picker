@@ -120,6 +120,14 @@ Use `--data` for the Parquet dataset (default: `tests/fixtures/data/mag7`) and
 
 ### Entry experiment settings
 
+Each entry experiment runs **two evaluation layers** for every signal variant:
+
+1. **Cross-section analytics** — IC, quantile performance, and entry robustness via `SingleFactorFactorEvaluator`
+2. **Trade simulation** — per-stock metrics with a standardized exit protocol
+
+Cross-section results appear under `cross_section` in each `factor_results` row. Rankings use
+real robustness scores when cross-section evaluation completes.
+
 **Fixed-period exit** (default — exit after N calendar months):
 
 ```yaml
@@ -140,7 +148,31 @@ entry:
 
 Run: `configs/experiments/entry_best_within_demo.yaml`
 
+**Cross-section evaluation** (runs automatically unless disabled):
+
+```yaml
+factor_evaluation:
+  enabled: true
+  minimum_security_count: 30   # capped to universe size at runtime
+  primary_horizon: 63
+  horizons: [21, 63]
+  compute_robustness: true
+
+research:
+  research_mode: DEMO
+  research_phase: VALIDATION
+  sample_scope: FULL
+```
+
 ### Exit experiment settings
+
+Each exit experiment runs **two evaluation layers** for every signal variant:
+
+1. **Trade simulation** — per-stock metrics with a standardized entry protocol
+2. **Exit robustness** — pooled trade outcomes scored via `compute_partial_exit_robustness`
+
+Exit robustness results appear under `exit_robustness` in each `factor_results` row. Rankings
+use real robustness scores when evaluation completes.
 
 **Fixed-period entry** (default — enter on a schedule):
 
@@ -160,11 +192,27 @@ exit:
 
 Run: `configs/experiments/exit_bottom_entry_demo.yaml`
 
+**Exit robustness** (runs automatically unless disabled):
+
+```yaml
+exit:
+  compute_robustness: true
+
+research:
+  research_mode: DEMO
+  research_phase: VALIDATION
+  sample_scope: FULL
+```
+
 ### Ranking and selection
 
 Factor scores use percentile-normalized metrics, configurable weights, and a robustness
 penalty. Each segment (regime × cap × volume × volatility × liquidity) produces its own
 ranking file with **95th-percentile voting** (not a fixed top-N).
+
+Rankings include an `evaluation_summary` inside each factor's `score_breakdown`:
+- Entry runs: `mean_ic`, `mean_spread`, `overall_robustness_score`
+- Exit runs: `overall_robustness_score`, `performance_stability_score`
 
 Output files:
 
@@ -212,10 +260,6 @@ entry and exit factors from its segment using 95th-percentile voting weights.
 | `exit_demo.yaml` | exit | demo | fixed-period entry (weekly) |
 | `exit_bottom_entry_demo.yaml` | exit | demo | bottom entry (LL+HL on close) |
 | `entry_and_exit_demo.yaml` | entry_and_exit | demo | requires entry + exit ranking JSON paths |
-| `mag7_stub_single_factor.yaml` | legacy stub smoke test | manual dates | |
-
-`run_single_factor_experiment.py` and `run_multi_factor_experiment.py` are deprecated
-wrappers that delegate to `run_experiment.py`.
 
 ### Output layout
 
@@ -226,87 +270,8 @@ results/<experiment_id>/
   reports/experiment_report.json
 ```
 
-## Single-factor experiments (legacy)
-
-Cross-sectional experiments run isolated per-stock backtests, aggregate mean return, and optionally score the entry factor (IC, robustness, quintile performance) plus exit robustness from closed trades.
-
-```bash
-# Stub signals on Mag7 (quick smoke test)
-python scripts/run_single_factor_experiment.py \
-  --config configs/experiments/mag7_stub_single_factor.yaml \
-  --output-dir results/stub_demo
-```
-
-Note: legacy single-factor YAML configs use the old schema. Use unified configs above for new work.
-
-```bash
-# Real momentum 12-1 + exit stack, 2020–2024 (meaningful IS/OOS IC)
-python scripts/run_single_factor_experiment.py \
-  --config configs/experiments/mag7_momentum_12_1_extended.yaml \
-  --output-dir results/extended_demo
-```
-
-Use `--data` to point at a Parquet dataset (default: `tests/fixtures/data/mag7`).
-
-### Multi-factor experiments (legacy)
-
-```bash
-python scripts/run_multi_factor_experiment.py \
-  --config configs/experiments/mag7_multi_momentum.yaml \
-  --output-dir results/multi_factor_demo
-```
-
-### Experiment configs (legacy)
-
-| Config | Purpose |
-|--------|---------|
-| `mag7_stub_single_factor.yaml` | Stub entry/exit, no factor evaluation |
-| `mag7_momentum_12_1.yaml` | 2023 window, explicit tickers |
-| `mag7_momentum_12_1_extended.yaml` | 2020–2024, factor eval + top-N entry |
-| `mag7_momentum_12_1_universe.yaml` | Extended window, universe builder |
-| `mag7_momentum_6_1.yaml` / `_extended.yaml` | 6-1 momentum variants |
-| `mag7_multi_momentum.yaml` | Multi-factor 12-1 + 6-1 composite, top-N entry |
-
-Key config fields:
-
-- `securities` — explicit ticker list, or omit when using `universe`
-- `universe` — price, liquidity, and history filters via `DefaultUniverseBuilder`
-- `top_n` — enter only the top N names by factor rank on each rebalance date
-- `factor_evaluation` — cross-sectional scoring, IC horizons, quintile performance
-- `research` — IS/OOS split and degradation metrics when `sample_scope: FULL`
-
-### Output layout (legacy)
-
-Each run writes an immutable directory under `--output-dir`:
-
-```
-results/<experiment_id>/
-  metadata/          # config snapshot, version metadata
-  summaries/         # experiment + per-stock + IS/OOS summaries
-  trades/            # closed trade records
-  reports/
-    experiment_report.json
-```
-
-Parquet tables hold Layer A signal/score records and Layer B stock summaries. The JSON report is the human-readable summary.
-
-### Report sections (legacy)
-
-`experiment_report.json` includes:
-
-| Section | Description |
-|---------|-------------|
-| `experiment_metrics` | Pooled trade stats: mean stock return, win rate, trade count |
-| `sample_metrics` | Same metrics split by IS and OOS when research scope is FULL |
-| `is_to_oos_degradation` | Return and trade-count deltas across the canonical split |
-| `factor_scoring` | Cross-sectional score counts and skipped dates |
-| `factor_ic` | Spearman IC by horizon; IS/OOS IC summaries and degradation |
-| `entry_robustness` | IC, return, sample, rank, and parameter stability scores |
-| `factor_performance` | Quintile forward-return spreads and long-short premia |
-| `factor_combination` | Multi-factor composite score summary (multi-factor runs only) |
-| `exit_robustness` | Exit-stack stability from trade outcomes (performance, sample, holding period, distribution, risk) |
-
-Pending dimensions (not yet scored) appear under `pending_dimensions` in the robustness sections.
+Unified experiment reports include cross-section factor evaluation sections built in
+`reporting/factor_evaluation_payload.py`.
 
 ## Configuration
 

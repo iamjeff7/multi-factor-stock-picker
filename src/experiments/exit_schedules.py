@@ -8,6 +8,7 @@ from decimal import Decimal
 from backtest.calendar import next_trading_day
 from schemas.data import PriceBar
 
+
 def fixed_period_exit_date(
     entry_date: date,
     trading_days: list[date],

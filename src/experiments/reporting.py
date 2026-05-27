@@ -168,15 +168,18 @@ def default_metric_weights() -> dict[str, Decimal]:
     return dict(DEFAULT_METRIC_WEIGHTS)
 
 
-def placeholder_robustness(grade: str = "B") -> tuple[Decimal, RobustnessGrade]:
-    mapping = {
-        "A": Decimal("0.85"),
-        "B": Decimal("0.70"),
-        "C": Decimal("0.55"),
-        "D": Decimal("0.40"),
+def robustness_dict(
+    *,
+    score: Decimal | None,
+    grade: RobustnessGrade | None,
+    available: bool,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "available": available,
+        "overall_robustness_score": str(score) if score is not None else None,
+        "overall_grade": grade.value if grade is not None else None,
     }
-    score = mapping.get(grade, Decimal("0.70"))
-    return score, RobustnessGrade(grade)
+    return payload
 
 
 def _json_default(value: object) -> object:

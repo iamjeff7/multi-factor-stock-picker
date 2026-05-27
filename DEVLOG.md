@@ -258,3 +258,28 @@
   - Task 33: Entry/exit evaluation runners + trade simulator
   - Task 34: Entry+Exit VectorBT runner + run_experiment.py
   - Task 35: Tests, README, replace old experiment scripts
+
+## Session 12 — 2026-05-27 13:48:34
+
+- Goal: Wire unified cross-section factor evaluation into entry/exit experiments and remove unused legacy experiment code
+
+- What I Built:
+  - `src/experiments/evaluation/` — UnifiedFactorEvaluator, config adapter, report payloads, evaluation summaries
+  - `src/reporting/factor_evaluation_payload.py` — shared IC/performance/robustness section builders for unified reports
+  - `src/experiments/entry_runner.py`, `exit_runner.py`, `ranking.py`, `reporting.py` — cross-section analytics + evaluation_summary in rankings
+  - `configs/experiments/entry_demo.yaml`, `exit_demo.yaml` — factor_evaluation and research settings
+  - `tests/experiments/test_unified_evaluation.py`, `test_evaluation_summary.py` — unified evaluator coverage
+  - `tests/backtest/test_experiment_config.py` — SingleFactorExperimentConfig validation after runner removal
+  - `README.md` — unified experiment docs only; legacy run commands removed
+
+- Decisions Made:
+  - Removed legacy SingleFactor/MultiFactor experiment runners — unified `run_experiment.py` is the sole CLI path
+  - Kept `SingleFactorFactorEvaluator` and `experiment_config.py` — still used by unified cross-section evaluation
+  - Deleted empty scaffold packages and orphan `mag7_*` YAML configs rather than leaving broken deprecated wrappers
+
+- What Didn't Work:
+  - Deprecated `run_single_factor_experiment.py` delegated to unified runner but legacy YAML lacked `experiment_mode` — removed both wrappers and stale configs instead of maintaining dual paths
+
+- Tasks Completed:
+  - Unified cross-section factor evaluation for entry/exit experiments
+  - Legacy experiment pipeline cleanup

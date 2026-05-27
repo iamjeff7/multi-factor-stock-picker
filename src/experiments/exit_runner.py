@@ -13,14 +13,16 @@ from data.protocols import DataAccess
 from experiments.config import UnifiedExperimentConfig
 from experiments.data_presets import resolve_data_preset
 from experiments.enums import EntryEvaluationMode
+from experiments.evaluation import UnifiedFactorEvaluator
+from experiments.evaluation.summary import build_exit_evaluation_summary
 from experiments.metrics import PerformanceMetrics, aggregate_metrics
-from experiments.ranking import FactorVariantRef, rank_factors_in_segment
+from experiments.ranking import FactorVariantRef, RankCandidate, rank_factors_in_segment
 from experiments.reporting import (
     build_exit_report_payload,
     build_rankings_payload,
     default_metric_weights,
     metrics_dict,
-    placeholder_robustness,
+    robustness_dict,
     write_json,
 )
 from experiments.resolution import resolve_unified_config
@@ -28,9 +30,13 @@ from experiments.segments import SegmentClassifier, SegmentLabels
 from experiments.signal_catalog import build_exit_signal, list_exit_variants
 from experiments.trade_simulator import simulate_exit_factor, trades_to_metrics
 from reporting.layout import ResultLayout
+from schemas.backtest import Trade
 
 
 class ExitExperimentRunner:
+    def __init__(self, *, factor_evaluator: UnifiedFactorEvaluator | None = None) -> None:
+        self._factor_evaluator = factor_evaluator or UnifiedFactorEvaluator()
+
     def run(
         self,
         config: UnifiedExperimentConfig,
@@ -70,15 +76,15 @@ class ExitExperimentRunner:
 
         cadence = config.exit.entry_cadence
         factor_results: list[dict[str, object]] = []
-        segment_candidates: dict[
-            str, list[tuple[FactorVariantRef, PerformanceMetrics, Decimal | None]]
-        ] = defaultdict(list)
+        segment_candidates: dict[str, list[RankCandidate]] = defaultdict(list)
         segment_labels_by_key: dict[str, SegmentLabels] = {}
 
         for variant in list_exit_variants():
             exit_signal = build_exit_signal(variant)
+            pooled_trades: list[Trade] = []
             per_stock_payload: list[dict[str, object]] = []
             stock_metrics: list[PerformanceMetrics] = []
+
             for security in config.securities:
                 trades = simulate_exit_factor(
                     data_access=data_access,
@@ -91,6 +97,7 @@ class ExitExperimentRunner:
                     entry_mode=config.exit.entry_evaluation_mode,
                     entry_cadence=cadence,
                 )
+                pooled_trades.extend(trades)
                 metrics = trades_to_metrics(
                     trades,
                     trading_days=preset.trading_days,
@@ -99,17 +106,34 @@ class ExitExperimentRunner:
                     initial_capital=initial_capital,
                 )
                 stock_metrics.append(metrics)
-                robustness_score, grade = placeholder_robustness("C")
+
+            exit_robustness = self._factor_evaluator.evaluate_exit_variant(
+                config=config,
+                data_access=data_access,
+                exit_signal=exit_signal,
+                trades=pooled_trades,
+                start_date=start_date,
+                end_date=end_date,
+                experiment_id=experiment_id,
+            )
+            variant_robustness = exit_robustness.robustness_score
+            variant_robustness_payload = robustness_dict(
+                score=variant_robustness,
+                grade=exit_robustness.robustness_grade,
+                available=exit_robustness.status == "completed",
+            )
+            evaluation_summary = build_exit_evaluation_summary(
+                exit_robustness.exit_robustness_payload
+            )
+
+            for security, metrics in zip(config.securities, stock_metrics, strict=True):
                 per_stock_payload.append(
                     {
                         "security_id": str(security.security_id),
                         "ticker": str(security.ticker),
                         "status": "completed",
                         "metrics": metrics_dict(metrics),
-                        "robustness": {
-                            "overall_robustness_score": str(robustness_score),
-                            "overall_grade": grade.value,
-                        },
+                        "robustness": variant_robustness_payload,
                     }
                 )
                 segment_key = segment_labels_by_security[str(security.security_id)].key()
@@ -124,25 +148,23 @@ class ExitExperimentRunner:
                             entry_cadence=cadence.value,
                         ),
                         metrics,
-                        robustness_score,
+                        variant_robustness,
+                        evaluation_summary,
                     )
                 )
 
             aggregate = aggregate_metrics(stock_metrics)
-            aggregate_robustness, aggregate_grade = placeholder_robustness("C")
             factor_results.append(
                 {
                     "signal_id": variant.signal_id,
                     "variant_id": variant.variant_id,
                     "signal_version": "1.0",
                     "entry_cadence": cadence.value,
+                    "exit_robustness": exit_robustness.exit_robustness_payload,
                     "per_stock": per_stock_payload,
                     "aggregate": {
                         "metrics": metrics_dict(aggregate),
-                        "robustness": {
-                            "overall_robustness_score": str(aggregate_robustness),
-                            "overall_grade": aggregate_grade.value,
-                        },
+                        "robustness": variant_robustness_payload,
                     },
                 }
             )
@@ -184,6 +206,7 @@ class ExitExperimentRunner:
             "allow_look_ahead": (
                 config.exit.entry_evaluation_mode is EntryEvaluationMode.BOTTOM_ENTRY
             ),
+            "exit_robustness_enabled": config.exit.compute_robustness,
         }
         report_payload = build_exit_report_payload(
             experiment_id=str(experiment_id),

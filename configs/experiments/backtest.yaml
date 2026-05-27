@@ -1,8 +1,0 @@
-initial_capital: 100000
-execution_price: NEXT_OPEN
-commission_pct: 0.0
-commission_per_trade: null
-slippage_pct: 0.001
-rebalance_frequency: MONTHLY
-portfolio_mode: TOP_N
-position_size_method: EQUAL_WEIGHT

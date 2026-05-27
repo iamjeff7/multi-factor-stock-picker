@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import overload
 
 from backtest.experiment_config import ExperimentSecurity, SingleFactorExperimentConfig
-from backtest.multi_factor_experiment_config import MultiFactorExperimentConfig
 from config.models import UniverseSettings
 from core.exceptions import ValidationError
 from data.protocols import DataAccess
@@ -14,28 +12,8 @@ from data.universe.builder import DefaultUniverseBuilder
 from data.universe.protocols import UniverseBuilder
 
 
-@overload
 def resolve_experiment_securities(
     config: SingleFactorExperimentConfig,
-    data_access: DataAccess,
-    *,
-    evaluation_date: date | None = None,
-    universe_builder: UniverseBuilder | None = None,
-) -> list[ExperimentSecurity]: ...
-
-
-@overload
-def resolve_experiment_securities(
-    config: MultiFactorExperimentConfig,
-    data_access: DataAccess,
-    *,
-    evaluation_date: date | None = None,
-    universe_builder: UniverseBuilder | None = None,
-) -> list[ExperimentSecurity]: ...
-
-
-def resolve_experiment_securities(
-    config: SingleFactorExperimentConfig | MultiFactorExperimentConfig,
     data_access: DataAccess,
     *,
     evaluation_date: date | None = None,
@@ -60,33 +38,13 @@ def resolve_experiment_securities(
     ]
 
 
-@overload
 def with_resolved_securities(
     config: SingleFactorExperimentConfig,
     data_access: DataAccess,
     *,
     evaluation_date: date | None = None,
     universe_builder: UniverseBuilder | None = None,
-) -> SingleFactorExperimentConfig: ...
-
-
-@overload
-def with_resolved_securities(
-    config: MultiFactorExperimentConfig,
-    data_access: DataAccess,
-    *,
-    evaluation_date: date | None = None,
-    universe_builder: UniverseBuilder | None = None,
-) -> MultiFactorExperimentConfig: ...
-
-
-def with_resolved_securities(
-    config: SingleFactorExperimentConfig | MultiFactorExperimentConfig,
-    data_access: DataAccess,
-    *,
-    evaluation_date: date | None = None,
-    universe_builder: UniverseBuilder | None = None,
-) -> SingleFactorExperimentConfig | MultiFactorExperimentConfig:
+) -> SingleFactorExperimentConfig:
     """Return a config copy with universe-resolved securities and validated top_n."""
     securities = resolve_experiment_securities(
         config,

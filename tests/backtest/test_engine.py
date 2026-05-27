@@ -7,12 +7,11 @@ from pathlib import Path
 from backtest.config import SingleStockBacktestConfig
 from backtest.engine import SingleStockBacktestEngine
 from backtest.entry_policy import SignalPresentEntryPolicy
-from backtest.result_store import InMemoryResultStore
 from core.enums import ExecutionPrice, PortfolioMode, PositionSizeMethod, RebalanceFrequency
 from core.types import SecurityId, Ticker
 from entry_signals.examples.stub_entry_signal import ExampleStubEntrySignal
 from exit_signals.examples.stub_exit_signal import ExampleStubExitSignal
-from reporting.stores import ParquetResultStore, ValidatingResultStore
+from reporting.stores import InMemoryResultStore, ParquetResultStore, ValidatingResultStore
 
 
 def test_engine_runs_entry_exit_lifecycle(rising_price_access) -> None:

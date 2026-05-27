@@ -27,9 +27,10 @@ class FactorScoreBreakdown:
     robustness_penalty: Decimal
     final_score: Decimal
     rank: int | None = None
+    evaluation_summary: dict[str, object] | None = None
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        payload = {
             "raw_metrics": {
                 key: str(value) if value is not None else None
                 for key, value in self.raw_metrics.items()
@@ -44,6 +45,9 @@ class FactorScoreBreakdown:
             "final_score": str(self.final_score),
             "rank": self.rank,
         }
+        if self.evaluation_summary is not None:
+            payload["evaluation_summary"] = self.evaluation_summary
+        return payload
 
 
 @dataclass
@@ -77,6 +81,7 @@ def compute_factor_score(
     robustness_score: Decimal | None,
     peer_metrics: list[PerformanceMetrics],
     metric_weights: dict[str, Decimal] | None = None,
+    evaluation_summary: dict[str, object] | None = None,
 ) -> FactorScoreBreakdown:
     weights = metric_weights or DEFAULT_METRIC_WEIGHTS
     raw = metrics_to_ranking_dict(metrics)
@@ -124,25 +129,35 @@ def compute_factor_score(
         robustness_score=robustness_score,
         robustness_penalty=penalty,
         final_score=final_score,
+        evaluation_summary=evaluation_summary,
     )
 
 
+RankCandidate = tuple[
+    FactorVariantRef,
+    PerformanceMetrics,
+    Decimal | None,
+    dict[str, object] | None,
+]
+
+
 def rank_factors_in_segment(
-    candidates: list[tuple[FactorVariantRef, PerformanceMetrics, Decimal | None]],
+    candidates: list[RankCandidate],
     segment: SegmentLabels,
     *,
     qualifying_percentile: int = DEFAULT_QUALIFYING_PERCENTILE,
     min_qualifying_factors: int = DEFAULT_MIN_QUALIFYING_FACTORS,
     metric_weights: dict[str, Decimal] | None = None,
 ) -> tuple[Decimal, list[RankedFactor]]:
-    peer_metrics = [metrics for _, metrics, _ in candidates]
+    peer_metrics = [metrics for _, metrics, _, _ in candidates]
     breakdowns: list[tuple[FactorVariantRef, FactorScoreBreakdown]] = []
-    for factor, metrics, robustness in candidates:
+    for factor, metrics, robustness, evaluation_summary in candidates:
         breakdown = compute_factor_score(
             metrics,
             robustness_score=robustness,
             peer_metrics=peer_metrics,
             metric_weights=metric_weights,
+            evaluation_summary=evaluation_summary,
         )
         breakdowns.append((factor, breakdown))
 

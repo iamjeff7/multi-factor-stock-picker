@@ -4,8 +4,8 @@ from experiments.enums import (
     DataPreset,
     EntryEvaluationMode,
     EntryExitEvaluationMode,
-    ExperimentMode,
     ExitEvaluationMode,
+    ExperimentMode,
 )
 
 __all__ = [
