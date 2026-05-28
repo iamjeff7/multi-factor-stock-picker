@@ -46,11 +46,12 @@ class EntryRobustnessValidator:
         total_weight = (
             config.component_weights.ic_stability
             + config.component_weights.return_stability
-            + config.component_weights.regime_stability
-            + config.component_weights.parameter_stability
-            + config.component_weights.rank_stability
-            + config.component_weights.breadth_stability
-            + config.component_weights.sample_stability
+            + config.component_weights.walk_forward_stability
+            + config.component_weights.out_of_sample_retention
+            + config.component_weights.market_regime_consistency
+            + config.component_weights.parameter_sensitivity
+            + config.component_weights.factor_decay_resistance
+            + config.component_weights.data_perturbation_resilience
         )
         if total_weight != Decimal("1"):
             issues.append(
@@ -75,11 +76,12 @@ class EntryRobustnessValidator:
         component_scores = {
             "ic_stability_score": result.ic_stability_score,
             "return_stability_score": result.return_stability_score,
-            "regime_stability_score": result.regime_stability_score,
-            "parameter_stability_score": result.parameter_stability_score,
-            "rank_stability_score": result.rank_stability_score,
-            "breadth_stability_score": result.breadth_stability_score,
-            "sample_stability_score": result.sample_stability_score,
+            "walk_forward_stability_score": result.walk_forward_stability_score,
+            "out_of_sample_retention_score": result.out_of_sample_retention_score,
+            "market_regime_consistency_score": result.market_regime_consistency_score,
+            "parameter_sensitivity_score": result.parameter_sensitivity_score,
+            "factor_decay_resistance_score": result.factor_decay_resistance_score,
+            "data_perturbation_resilience_score": result.data_perturbation_resilience_score,
             "overall_robustness_score": result.overall_robustness_score,
         }
         for field_name, value in component_scores.items():
@@ -146,11 +148,12 @@ def _expected_overall_score(
     return quantize_score(
         result.ic_stability_score * weights.ic_stability
         + result.return_stability_score * weights.return_stability
-        + result.regime_stability_score * weights.regime_stability
-        + result.parameter_stability_score * weights.parameter_stability
-        + result.rank_stability_score * weights.rank_stability
-        + result.breadth_stability_score * weights.breadth_stability
-        + result.sample_stability_score * weights.sample_stability
+        + result.walk_forward_stability_score * weights.walk_forward_stability
+        + result.out_of_sample_retention_score * weights.out_of_sample_retention
+        + result.market_regime_consistency_score * weights.market_regime_consistency
+        + result.parameter_sensitivity_score * weights.parameter_sensitivity
+        + result.factor_decay_resistance_score * weights.factor_decay_resistance
+        + result.data_perturbation_resilience_score * weights.data_perturbation_resilience
     )
 
 

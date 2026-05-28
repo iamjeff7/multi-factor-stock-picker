@@ -86,10 +86,11 @@ class EntryRobustnessResult(BaseModel):
     signal_id: SignalId
     ic_stability_score: Decimal
     return_stability_score: Decimal
-    regime_stability_score: Decimal
-    parameter_stability_score: Decimal
-    rank_stability_score: Decimal
-    breadth_stability_score: Decimal
-    sample_stability_score: Decimal
+    walk_forward_stability_score: Decimal
+    out_of_sample_retention_score: Decimal
+    market_regime_consistency_score: Decimal
+    parameter_sensitivity_score: Decimal
+    factor_decay_resistance_score: Decimal
+    data_perturbation_resilience_score: Decimal
     overall_robustness_score: Decimal
     robustness_classification: str

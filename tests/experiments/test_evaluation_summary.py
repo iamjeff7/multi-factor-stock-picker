@@ -37,10 +37,10 @@ def test_build_exit_evaluation_summary_extracts_robustness() -> None:
             "exit_robustness": {
                 "available": True,
                 "overall_robustness_score": "0.63",
-                "performance_stability_score": "0.80",
+                "walk_forward_stability_score": "0.80",
             },
         }
     )
     assert summary["evaluation_status"] == "completed"
     assert summary["overall_robustness_score"] == "0.63"
-    assert summary["performance_stability_score"] == "0.80"
+    assert summary["walk_forward_stability_score"] == "0.80"

@@ -19,8 +19,8 @@ def to_robustness_score_record(
     return RobustnessScoreRecord(
         experiment_id=experiment_id,
         robustness_score=result.overall_robustness_score,
-        stability_score=result.performance_stability_score,
-        consistency_score=result.sample_stability_score,
-        sample_size_score=result.trade_distribution_stability_score,
+        stability_score=result.walk_forward_stability_score,
+        consistency_score=result.out_of_sample_retention_score,
+        sample_size_score=result.profit_capture_consistency_score,
         overall_grade=classification_to_grade(classification),
     )

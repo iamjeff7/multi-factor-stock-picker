@@ -1,4 +1,4 @@
-# v2_exit_robustness_scoring_specification.md
+# exit_robustness_scoring_specification.md
 
 ## Purpose
 
@@ -24,9 +24,9 @@ It does not define:
 
 ## References
 
-- v2_exit_signal_specification.md
-- v2_backtest_methodology_specification.md
-- v2_exit_performance_specification.md
+- exit_signal_specification.md
+- backtest_methodology_specification.md
+- exit_performance_specification.md
 
 ---
 
@@ -149,7 +149,7 @@ Signals that work only within a narrow duration range receive lower robustness s
 
 # Sample Stability
 
-Evaluate consistency between in-sample and out-of-sample periods using the canonical split defined in `v2_backtest_methodology_specification.md` §30.
+Evaluate consistency between in-sample and out-of-sample periods using the canonical split defined in `backtest_methodology_specification.md` §30.
 
 Required periods:
 
@@ -232,17 +232,31 @@ Recommended default weights:
 
 | Component | Weight |
 |------------|---------|
-| Performance Stability | 25% |
-| Regime Stability | 15% |
-| Parameter Stability | 20% |
-| Holding Period Stability | 10% |
-| Sample Stability | 10% |
 | Trade Distribution Stability | 10% |
-| Risk Stability | 10% |
+| Holding Period Stability | 10% |
+| Walk-Forward Stability | 20% |
+| Out-of-Sample Retention | 20% |
+| Market Regime Consistency | 15% |
+| Parameter Sensitivity | 10% |
+| Profit Capture Consistency | 10% |
+| Data Perturbation Resilience | 5% |
 
 Weights must be configurable.
 
 Total weight must equal 100%.
+
+---
+
+# Migration / Removed Dimensions
+
+The following dimensions were removed from the default exit robustness model:
+
+| Removed Component | Former Weight | Notes |
+|-------------------|---------------|-------|
+| Performance Stability | 25% | Absorbed into walk-forward stability |
+| Risk Stability | 10% | No slot in finalized model |
+
+`Sample Stability` is renamed to `Out-of-Sample Retention` with an increased default weight (10% → 20%).
 
 ---
 
@@ -317,16 +331,20 @@ For every evaluated exit signal:
 ```text
 exit_signal_id
 
-performance_stability_score
-regime_stability_score
-parameter_stability_score
-holding_period_stability_score
-sample_stability_score
 trade_distribution_stability_score
-risk_stability_score
+holding_period_stability_score
+walk_forward_stability_score
+out_of_sample_retention_score
+market_regime_consistency_score
+parameter_sensitivity_score
+profit_capture_consistency_score
+data_perturbation_resilience_score
 
 overall_robustness_score
 robustness_classification
+pending_dimensions
 ```
+
+Legacy aliases (`performance_stability_score`, `regime_stability_score`, `parameter_stability_score`, `sample_stability_score`, `risk_stability_score`) may appear in transitional payloads.
 
 These outputs shall be persisted for downstream research and exit signal comparison.

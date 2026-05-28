@@ -201,6 +201,57 @@ def simulate_exit_factor(
     return trades
 
 
+def simulate_baseline_exit_factor(
+    *,
+    data_access: DataAccess,
+    security_id: SecurityId,
+    ticker: Ticker,
+    start_date: date,
+    end_date: date,
+    initial_capital: Decimal,
+    entry_mode: EntryEvaluationMode,
+    entry_cadence: EntryCadence,
+    baseline_holding_months: int = 3,
+) -> list[Trade]:
+    """Simulate exits using fixed holding period as the baseline reference."""
+    bars = load_price_bars(data_access, security_id, start_date, end_date)
+    trading_days = sorted(
+        bar.trade_date for bar in bars if start_date <= bar.trade_date <= end_date
+    )
+    if not trading_days:
+        return []
+
+    closes = build_close_lookup(bars)
+    if entry_mode is EntryEvaluationMode.FIXED_PERIOD:
+        entry_dates = collect_scheduled_entry_dates(trading_days, entry_cadence)
+    else:
+        entry_dates = collect_bottom_entry_dates(bars, trading_days)
+
+    trades: list[Trade] = []
+    for entry_day in entry_dates:
+        entry_exec = entry_execution_day(entry_day, trading_days) or entry_day
+        if entry_exec not in closes:
+            continue
+        exit_day = fixed_period_exit_date(
+            entry_exec,
+            trading_days,
+            holding_months=baseline_holding_months,
+        )
+        if exit_day is None or exit_day <= entry_exec:
+            continue
+        trade = _build_trade(
+            security_id=security_id,
+            ticker=ticker,
+            entry_day=entry_exec,
+            exit_day=exit_day,
+            closes=closes,
+            initial_capital=initial_capital,
+        )
+        if trade is not None:
+            trades.append(trade)
+    return trades
+
+
 def simulate_combined_strategy(
     *,
     data_access: DataAccess,

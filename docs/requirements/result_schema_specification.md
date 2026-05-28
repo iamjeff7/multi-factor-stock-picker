@@ -413,7 +413,7 @@ FULL
 ### Reporting Rules
 
 - `FULL` summarizes the entire configured research window
-- `IS` and `OOS` summarize metrics computed from observations assigned by the canonical split defined in `v2_backtest_methodology_specification.md` §30
+- `IS` and `OOS` summarize metrics computed from observations assigned by the canonical split defined in `backtest_methodology_specification.md` §30
 - Implementations must persist at minimum one `FULL`, one `IS`, and one `OOS` summary for cross-sectional experiments
 
 ---
@@ -493,6 +493,36 @@ F
 Definitions are provided in:
 
 - entry_robustness_scoring_specification.md
+- exit_robustness_scoring_specification.md
+- combined_strategy_robustness_specification.md
+
+---
+
+## 17. Experiment Scoring Outputs
+
+Unified experiment reports and ranking artifacts may include composite scores defined in experiment_scoring_specification.md.
+
+### Entry / exit rankings
+
+```text
+final_factor_score
+score_breakdown.raw_metrics
+score_breakdown.percentile_ranks
+score_breakdown.metric_weights
+score_breakdown.weighted_metric_score
+score_breakdown.robustness_score
+score_breakdown.final_score
+```
+
+### Combined strategy reports
+
+```text
+final_strategy_score
+strategy_metrics
+strategy_robustness
+```
+
+Calculation methodologies are defined in experiment_scoring_specification.md, not in this storage schema.
 
 ---
 

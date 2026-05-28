@@ -17,9 +17,16 @@ from experiments.config import UnifiedExperimentConfig
 from experiments.data_presets import resolve_data_preset
 from experiments.reporting import build_combined_report_payload, write_json
 from experiments.resolution import resolve_unified_config
+from experiments.scoring.combined_metrics import (
+    StrategyMetrics,
+    aggregate_strategy_metrics,
+    build_strategy_metrics_from_vbt,
+    compute_final_strategy_score,
+)
 from experiments.segments import SegmentClassifier
 from experiments.signal_catalog import build_entry_signal, build_exit_signal
 from experiments.trade_simulator import simulate_combined_strategy
+from evaluation.combined.robustness.scorer import compute_combined_robustness
 from reporting.layout import ResultLayout
 
 try:
@@ -63,7 +70,7 @@ class CombinedExperimentRunner:
         classifier = SegmentClassifier()
 
         per_stock: list[dict[str, object]] = []
-        portfolio_stats: list[dict[str, object]] = []
+        strategy_metrics_rows: list[StrategyMetrics] = []
 
         for security in config.securities:
             labels = classifier.classify_cross_section(
@@ -104,8 +111,18 @@ class CombinedExperimentRunner:
                 start_date=start_date,
                 end_date=end_date,
                 initial_capital=float(initial_capital),
+                benchmark_ticker=config.combined.benchmark_ticker,
             )
-            portfolio_stats.append(vbt_metrics)
+            combined_robustness = compute_combined_robustness()
+            strategy_metrics = build_strategy_metrics_from_vbt(
+                nested_metrics=vbt_metrics,
+                robustness_score=combined_robustness.overall_robustness_score,
+            )
+            strategy_metrics_rows.append(strategy_metrics)
+            final_strategy_score = compute_final_strategy_score(
+                strategy_metrics,
+                peer_metrics=strategy_metrics_rows,
+            )
             per_stock.append(
                 {
                     "security_id": str(security.security_id),
@@ -115,12 +132,27 @@ class CombinedExperimentRunner:
                     "selected_entry_factors": [entry_factor],
                     "selected_exit_factors": [exit_factor],
                     "metrics": vbt_metrics,
+                    "strategy_metrics": strategy_metrics.model_dump(mode="json"),
+                    "final_strategy_score": str(final_strategy_score),
+                    "strategy_robustness": combined_robustness.model_dump(mode="json"),
                     "entry_signal_id": entry_signal.signal_id,
                     "exit_signal_id": exit_signal.signal_id,
                 }
             )
 
-        aggregate = _aggregate_vbt_metrics(portfolio_stats)
+        aggregate_metrics = aggregate_strategy_metrics(strategy_metrics_rows)
+        aggregate_vbt = _aggregate_vbt_metrics(
+            [row["metrics"] for row in per_stock if row.get("status") == "completed"]
+        )
+        aggregate_final_score = compute_final_strategy_score(
+            aggregate_metrics,
+            peer_metrics=strategy_metrics_rows,
+        )
+        aggregate = {
+            "metrics": aggregate_vbt,
+            "strategy_metrics": aggregate_metrics.model_dump(mode="json"),
+            "final_strategy_score": str(aggregate_final_score),
+        }
         run_config = {
             "data_preset": config.data_preset.value,
             "start_date": start_date.isoformat(),
@@ -150,7 +182,7 @@ class CombinedExperimentRunner:
             },
             portfolio_metrics=aggregate,
             per_stock=per_stock,
-            aggregate={"metrics": aggregate},
+            aggregate=aggregate,
         )
         experiment_dir = output_dir / str(experiment_id)
         return write_json(experiment_dir / ResultLayout.EXPERIMENT_REPORT, report_payload)
@@ -213,6 +245,7 @@ def _vectorbt_metrics_from_trades(
     start_date: date,
     end_date: date,
     initial_capital: float,
+    benchmark_ticker: str,
 ) -> dict[str, object]:
     if not trades:
         return _empty_vbt_metrics()
@@ -243,6 +276,14 @@ def _vectorbt_metrics_from_trades(
         freq="1D",
     )
     stats = portfolio.stats()
+    returns = portfolio.returns().dropna()
+    benchmark_returns = _benchmark_returns(
+        data_access=data_access,
+        benchmark_ticker=benchmark_ticker,
+        index=index,
+    )
+    alpha, beta = _alpha_beta(returns, benchmark_returns)
+    tail_ratio = _tail_ratio(returns)
     total = int(stats.get("Total Trades", 0))
     win_rate_pct = float(stats.get("Win Rate [%]", 0) or 0)
     winning_trades = int(total * win_rate_pct / 100)
@@ -263,12 +304,14 @@ def _vectorbt_metrics_from_trades(
             "expectancy": _fmt(stats.get("Expectancy")),
         },
         "benchmark_comparison": {
-            "benchmark_ticker": "SPY",
+            "benchmark_ticker": benchmark_ticker,
             "risk_free_rate_source": "T_BILL",
-            "alpha": None,
-            "beta": None,
+            "alpha": _fmt(alpha),
+            "beta": _fmt(beta),
             "information_ratio": None,
         },
+        "tail_ratio": _fmt(tail_ratio),
+        "turnover_rate": _fmt(stats.get("Total Trades")),
         "trade_counts": {
             "total_trades": total,
             "winning_trades": winning_trades,
@@ -290,7 +333,92 @@ def _vectorbt_metrics_from_trades(
 def _aggregate_vbt_metrics(rows: list[dict[str, object]]) -> dict[str, object]:
     if not rows:
         return _empty_vbt_metrics()
-    return rows[0]
+
+    numeric_fields = [
+        ("risk_adjusted", "sharpe_ratio"),
+        ("risk_adjusted", "sortino_ratio"),
+        ("risk_adjusted", "profit_factor"),
+        ("risk_adjusted", "cagr"),
+        ("risk_adjusted", "calmar_ratio"),
+        ("risk_and_capital", "max_drawdown"),
+        ("risk_and_capital", "win_rate"),
+        ("risk_and_capital", "expectancy"),
+        ("benchmark_comparison", "alpha"),
+        ("benchmark_comparison", "beta"),
+    ]
+    aggregate = _empty_vbt_metrics()
+    for section, field in numeric_fields:
+        values = []
+        for row in rows:
+            section_payload = row.get(section, {})
+            if isinstance(section_payload, dict) and section_payload.get(field) is not None:
+                values.append(Decimal(str(section_payload[field])))
+        if not values:
+            continue
+        target = aggregate[section]
+        assert isinstance(target, dict)
+        target[field] = str(sum(values, start=Decimal("0")) / Decimal(len(values)))
+
+    tail_values = [
+        Decimal(str(row["tail_ratio"]))
+        for row in rows
+        if row.get("tail_ratio") is not None
+    ]
+    if tail_values:
+        aggregate["tail_ratio"] = str(sum(tail_values, start=Decimal("0")) / Decimal(len(tail_values)))
+
+    trade_total = sum(
+        int(_section(row, "trade_counts").get("total_trades", 0) or 0) for row in rows
+    )
+    trade_counts = aggregate["trade_counts"]
+    assert isinstance(trade_counts, dict)
+    trade_counts["total_trades"] = trade_total
+    return aggregate
+
+
+def _benchmark_returns(
+    *,
+    data_access: DataAccess,
+    benchmark_ticker: str,
+    index: pd.DatetimeIndex,
+) -> pd.Series:
+    _ = benchmark_ticker
+    return pd.Series(dtype=float)
+
+
+def _alpha_beta(
+    strategy_returns: pd.Series,
+    benchmark_returns: pd.Series,
+) -> tuple[Decimal | None, Decimal | None]:
+    aligned = pd.concat([strategy_returns, benchmark_returns], axis=1, join="inner").dropna()
+    if aligned.empty or len(aligned) < 2:
+        return None, None
+    strategy = aligned.iloc[:, 0]
+    benchmark = aligned.iloc[:, 1]
+    benchmark_var = float(benchmark.var())
+    if benchmark_var == 0:
+        return None, None
+    beta = float(strategy.cov(benchmark) / benchmark_var)
+    alpha = float(strategy.mean() - beta * benchmark.mean())
+    return Decimal(str(alpha)), Decimal(str(beta))
+
+
+def _tail_ratio(returns: pd.Series) -> Decimal | None:
+    clean = returns.dropna()
+    if clean.empty:
+        return None
+    upper = float(clean.quantile(0.95))
+    lower = abs(float(clean.quantile(0.05)))
+    if lower == 0:
+        return None
+    return Decimal(str(upper / lower))
+
+
+def _section(payload: dict[str, object], key: str) -> dict[str, object]:
+    value = payload.get(key)
+    if isinstance(value, dict):
+        return value
+    return {}
 
 
 def _empty_vbt_metrics() -> dict[str, object]:

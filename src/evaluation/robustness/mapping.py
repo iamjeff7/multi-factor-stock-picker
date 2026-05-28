@@ -20,7 +20,7 @@ def to_robustness_score_record(
         experiment_id=experiment_id,
         robustness_score=result.overall_robustness_score,
         stability_score=result.ic_stability_score,
-        consistency_score=result.sample_stability_score,
-        sample_size_score=result.breadth_stability_score,
+        consistency_score=result.out_of_sample_retention_score,
+        sample_size_score=result.factor_decay_resistance_score,
         overall_grade=classification_to_grade(classification),
     )

@@ -39,6 +39,7 @@ class ExitExperimentSettings(BaseModel):
     entry_evaluation_mode: EntryEvaluationMode = EntryEvaluationMode.FIXED_PERIOD
     entry_cadence: EntryCadence = EntryCadence.WEEK
     compute_robustness: bool = True
+    baseline_holding_months: int = 3
 
 
 class CombinedExperimentSettings(BaseModel):

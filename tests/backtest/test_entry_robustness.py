@@ -98,17 +98,16 @@ def test_compute_partial_entry_robustness_scores_available_dimensions() -> None:
 
     assert result is not None
     assert pending == [
-        "regime_stability",
-        "breadth_stability",
-        "rank_stability",
-        "parameter_stability",
+        "market_regime_consistency",
+        "data_perturbation_resilience",
+        "parameter_sensitivity",
     ]
     assert Decimal("0") <= result.overall_robustness_score <= Decimal("1")
-    assert result.regime_stability_score == Decimal("0")
+    assert result.market_regime_consistency_score == Decimal("0")
     assert result.ic_stability_score > Decimal("0")
 
 
-def test_compute_partial_entry_robustness_scores_rank_stability_from_factor_scores() -> None:
+def test_compute_partial_entry_robustness_uses_factor_scores_without_rank_dimension() -> None:
     evaluation_dates = [date(2020, 1, 31), date(2020, 2, 29), date(2020, 8, 31), date(2020, 9, 30)]
     daily = [
         _daily_ic(evaluation_date=evaluation_date, ic=Decimal("0.08"))
@@ -164,7 +163,6 @@ def test_compute_partial_entry_robustness_scores_rank_stability_from_factor_scor
     )
 
     assert result is not None
-    assert "rank_stability" not in pending
-    assert result.rank_stability_score > Decimal("0")
-    assert "regime_stability" in pending
-    assert "breadth_stability" in pending
+    assert "market_regime_consistency" in pending
+    assert "data_perturbation_resilience" in pending
+    assert result.walk_forward_stability_score >= Decimal("0")

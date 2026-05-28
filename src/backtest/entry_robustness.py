@@ -15,15 +15,15 @@ from data.protocols import DataAccess
 from entry_signals.protocols import EntrySignal
 from evaluation.robustness.classification import classify_robustness_score
 from evaluation.robustness.components import (
+    score_factor_decay_resistance,
     score_ic_stability,
+    score_out_of_sample_retention,
     score_parameter_stability,
-    score_rank_stability,
     score_return_stability,
-    score_sample_stability,
+    score_walk_forward_stability_from_ic_series,
 )
 from evaluation.robustness.config import EntryRobustnessConfig
 from evaluation.robustness.normalize import quantize_score
-from evaluation.robustness.rank_inputs import build_rank_stability_from_factor_scores
 from evaluation.robustness.sample_inputs import (
     build_sample_stability_from_ic_analysis,
     build_sample_stability_from_split,
@@ -44,16 +44,17 @@ from schemas.robustness import (
 )
 
 PENDING_ROBUSTNESS_DIMENSIONS = (
-    "regime_stability",
-    "breadth_stability",
+    "market_regime_consistency",
+    "data_perturbation_resilience",
 )
 
 ACTIVE_ROBUSTNESS_WEIGHT_KEYS = (
     "ic_stability",
     "return_stability",
-    "sample_stability",
-    "rank_stability",
-    "parameter_stability",
+    "walk_forward_stability",
+    "out_of_sample_retention",
+    "parameter_sensitivity",
+    "factor_decay_resistance",
 )
 
 
@@ -74,12 +75,10 @@ def compute_partial_entry_robustness(
     ic_analysis: ICSampleAnalysis | None = None,
     scoring_config: EntryRobustnessConfig | None = None,
 ) -> tuple[EntryRobustnessResult | None, list[str]]:
-    """Score available robustness dimensions; regime and breadth remain pending."""
+    """Score available robustness dimensions; regime and perturbation remain pending."""
+    _ = factor_scores
     if ic_summary is None or not daily_ic_results:
-        return None, list(PENDING_ROBUSTNESS_DIMENSIONS) + [
-            "rank_stability",
-            "parameter_stability",
-        ]
+        return None, list(PENDING_ROBUSTNESS_DIMENSIONS) + ["parameter_sensitivity"]
 
     config_obj = scoring_config or EntryRobustnessConfig()
     ic_dates = {result.evaluation_date for result in daily_ic_results if result.horizon == horizon}
@@ -89,10 +88,7 @@ def compute_partial_entry_robustness(
         evaluation_dates=ic_dates,
     )
     if return_stability is None:
-        return None, list(PENDING_ROBUSTNESS_DIMENSIONS) + [
-            "rank_stability",
-            "parameter_stability",
-        ]
+        return None, list(PENDING_ROBUSTNESS_DIMENSIONS) + ["parameter_sensitivity"]
 
     sample_stability = _build_sample_stability_input(
         daily_ic_results=daily_ic_results,
@@ -104,19 +100,6 @@ def compute_partial_entry_robustness(
     )
 
     pending_dimensions = list(PENDING_ROBUSTNESS_DIMENSIONS)
-    rank_stability = RankStabilityInput(
-        top_decile_persistence=Decimal("0"),
-        turnover_rate=Decimal("1"),
-    )
-    if factor_scores:
-        built_rank = build_rank_stability_from_factor_scores(factor_scores)
-        if built_rank is not None:
-            rank_stability = built_rank
-        else:
-            pending_dimensions.append("rank_stability")
-    else:
-        pending_dimensions.append("rank_stability")
-
     parameter_stability = ParameterStabilityInput()
     if (
         config is not None
@@ -136,18 +119,26 @@ def compute_partial_entry_robustness(
         if built_parameter is not None:
             parameter_stability = built_parameter
         else:
-            pending_dimensions.append("parameter_stability")
+            pending_dimensions.append("parameter_sensitivity")
     else:
-        pending_dimensions.append("parameter_stability")
+        pending_dimensions.append("parameter_sensitivity")
 
     ic_stability = ICStabilityInput.from_ic_summary(ic_summary)
+    ic_series = [
+        result.ic
+        for result in sorted(daily_ic_results, key=lambda row: row.evaluation_date)
+        if result.horizon == horizon
+    ]
     inputs = EntryRobustnessInputs(
         signal_id=signal_id,
         ic_stability=ic_stability,
         return_stability=return_stability,
         regime_stability=RegimeStabilityInput(),
         parameter_stability=parameter_stability,
-        rank_stability=rank_stability,
+        rank_stability=RankStabilityInput(
+            top_decile_persistence=Decimal("0"),
+            turnover_rate=Decimal("1"),
+        ),
         breadth_stability=BreadthStabilityInput(),
         sample_stability=sample_stability,
     )
@@ -158,21 +149,25 @@ def compute_partial_entry_robustness(
     return_stability_score = quantize_score(
         score_return_stability(inputs.return_stability, config=config_obj)
     )
-    sample_stability_score = quantize_score(
-        score_sample_stability(inputs.sample_stability, config=config_obj)
+    out_of_sample_retention_score = quantize_score(
+        score_out_of_sample_retention(inputs.sample_stability, config=config_obj)
     )
-    rank_stability_score = quantize_score(score_rank_stability(inputs.rank_stability))
-    parameter_stability_score = quantize_score(
+    walk_forward_stability_score = quantize_score(
+        score_walk_forward_stability_from_ic_series(ic_series, config=config_obj)
+    )
+    parameter_sensitivity_score = quantize_score(
         score_parameter_stability(inputs.parameter_stability, config=config_obj)
     )
+    factor_decay_resistance_score = quantize_score(score_factor_decay_resistance(ic_series))
 
     weights = config_obj.component_weights
     component_scores = {
         "ic_stability": ic_stability_score,
         "return_stability": return_stability_score,
-        "sample_stability": sample_stability_score,
-        "rank_stability": rank_stability_score,
-        "parameter_stability": parameter_stability_score,
+        "walk_forward_stability": walk_forward_stability_score,
+        "out_of_sample_retention": out_of_sample_retention_score,
+        "parameter_sensitivity": parameter_sensitivity_score,
+        "factor_decay_resistance": factor_decay_resistance_score,
     }
     active_weight = sum(
         getattr(weights, key)
@@ -200,11 +195,12 @@ def compute_partial_entry_robustness(
             signal_id=signal_id,
             ic_stability_score=ic_stability_score,
             return_stability_score=return_stability_score,
-            regime_stability_score=Decimal("0"),
-            parameter_stability_score=parameter_stability_score,
-            rank_stability_score=rank_stability_score,
-            breadth_stability_score=Decimal("0"),
-            sample_stability_score=sample_stability_score,
+            walk_forward_stability_score=walk_forward_stability_score,
+            out_of_sample_retention_score=out_of_sample_retention_score,
+            market_regime_consistency_score=Decimal("0"),
+            parameter_sensitivity_score=parameter_sensitivity_score,
+            factor_decay_resistance_score=factor_decay_resistance_score,
+            data_perturbation_resilience_score=Decimal("0"),
             overall_robustness_score=overall_robustness_score,
             robustness_classification=classification.value,
         ),

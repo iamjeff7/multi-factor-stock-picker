@@ -20,15 +20,23 @@ from experiments.ranking import FactorVariantRef, RankCandidate, rank_factors_in
 from experiments.reporting import (
     build_exit_report_payload,
     build_rankings_payload,
-    default_metric_weights,
+    default_exit_metric_weights,
     metrics_dict,
     robustness_dict,
     write_json,
 )
 from experiments.resolution import resolve_unified_config
+from experiments.scoring.exit_metrics import build_exit_ranking_metrics
+from experiments.scoring.weights import EXIT_HIGHER_IS_BETTER
 from experiments.segments import SegmentClassifier, SegmentLabels
 from experiments.signal_catalog import build_exit_signal, list_exit_variants
-from experiments.trade_simulator import simulate_exit_factor, trades_to_metrics
+from experiments.trade_simulator import (
+    simulate_baseline_exit_factor,
+    simulate_exit_factor,
+    trades_to_metrics,
+)
+from experiments.entry_schedules import load_price_bars
+from experiments.exit_schedules import build_close_lookup
 from reporting.layout import ResultLayout
 from schemas.backtest import Trade
 
@@ -70,7 +78,7 @@ class ExitExperimentRunner:
                 security.security_id
             ]
 
-        metric_weights = default_metric_weights()
+        metric_weights = default_exit_metric_weights()
         if config.ranking.metric_weights:
             metric_weights.update(config.ranking.metric_weights)
 
@@ -84,6 +92,7 @@ class ExitExperimentRunner:
             pooled_trades: list[Trade] = []
             per_stock_payload: list[dict[str, object]] = []
             stock_metrics: list[PerformanceMetrics] = []
+            per_stock_ranking_inputs: list[tuple] = []
 
             for security in config.securities:
                 trades = simulate_exit_factor(
@@ -97,6 +106,17 @@ class ExitExperimentRunner:
                     entry_mode=config.exit.entry_evaluation_mode,
                     entry_cadence=cadence,
                 )
+                baseline_trades = simulate_baseline_exit_factor(
+                    data_access=data_access,
+                    security_id=security.security_id,
+                    ticker=security.ticker,
+                    start_date=start_date,
+                    end_date=end_date,
+                    initial_capital=initial_capital,
+                    entry_mode=config.exit.entry_evaluation_mode,
+                    entry_cadence=cadence,
+                    baseline_holding_months=config.exit.baseline_holding_months,
+                )
                 pooled_trades.extend(trades)
                 metrics = trades_to_metrics(
                     trades,
@@ -106,6 +126,14 @@ class ExitExperimentRunner:
                     initial_capital=initial_capital,
                 )
                 stock_metrics.append(metrics)
+                bars = load_price_bars(
+                    data_access,
+                    security.security_id,
+                    start_date,
+                    end_date,
+                )
+                closes = build_close_lookup(bars)
+                per_stock_ranking_inputs.append((security, metrics, baseline_trades, closes))
 
             exit_robustness = self._factor_evaluator.evaluate_exit_variant(
                 config=config,
@@ -126,13 +154,32 @@ class ExitExperimentRunner:
                 exit_robustness.exit_robustness_payload
             )
 
-            for security, metrics in zip(config.securities, stock_metrics, strict=True):
+            for security, metrics, baseline_trades, closes in per_stock_ranking_inputs:
+                variant_trades = [
+                    trade
+                    for trade in pooled_trades
+                    if trade.security_id == security.security_id
+                ]
+                ranking_metrics = build_exit_ranking_metrics(
+                    variant_trades=variant_trades,
+                    baseline_trades=baseline_trades,
+                    trading_days=preset.trading_days,
+                    calendar_start=start_date,
+                    calendar_end=end_date,
+                    initial_capital=initial_capital,
+                    closes=closes,
+                    robustness_score=variant_robustness,
+                )
                 per_stock_payload.append(
                     {
                         "security_id": str(security.security_id),
                         "ticker": str(security.ticker),
                         "status": "completed",
                         "metrics": metrics_dict(metrics),
+                        "ranking_metrics": {
+                            key: str(value) if value is not None else None
+                            for key, value in ranking_metrics.items()
+                        },
                         "robustness": variant_robustness_payload,
                     }
                 )
@@ -147,8 +194,7 @@ class ExitExperimentRunner:
                             variant_id=variant.variant_id,
                             entry_cadence=cadence.value,
                         ),
-                        metrics,
-                        variant_robustness,
+                        ranking_metrics,
                         evaluation_summary,
                     )
                 )
@@ -180,6 +226,7 @@ class ExitExperimentRunner:
                 qualifying_percentile=config.ranking.qualifying_percentile,
                 min_qualifying_factors=config.ranking.min_qualifying_factors,
                 metric_weights=metric_weights,
+                higher_is_better=EXIT_HIGHER_IS_BETTER,
             )
             segment_rankings[segment_key] = ranked
             thresholds[segment_key] = threshold
@@ -207,6 +254,7 @@ class ExitExperimentRunner:
                 config.exit.entry_evaluation_mode is EntryEvaluationMode.BOTTOM_ENTRY
             ),
             "exit_robustness_enabled": config.exit.compute_robustness,
+            "baseline_holding_months": config.exit.baseline_holding_months,
         }
         report_payload = build_exit_report_payload(
             experiment_id=str(experiment_id),

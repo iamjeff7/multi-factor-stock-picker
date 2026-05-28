@@ -1,4 +1,4 @@
-# v2_factor_performance_specification.md
+# factor_performance_specification.md
 
 ## 1. Purpose
 
@@ -64,8 +64,8 @@ Identical inputs must produce identical results.
 
 Consumes:
 
-- v2_factor_scoring_specification.md
-- v2_backtest_methodology_specification.md
+- factor_scoring_specification.md
+- backtest_methodology_specification.md
 
 Required fields:
 
@@ -535,14 +535,14 @@ holding_periods:
 
 Consumes:
 
-- v2_factor_scoring_specification.md
-- v2_information_coefficient_specification.md
-- v2_backtest_methodology_specification.md
+- factor_scoring_specification.md
+- information_coefficient_specification.md
+- backtest_methodology_specification.md
 
 Produces:
 
-- v2_entry_robustness_scoring_specification.md
-- v2_result_schema_specification.md
+- entry_robustness_scoring_specification.md
+- result_schema_specification.md
 
 Relationship:
 
@@ -556,7 +556,7 @@ Forward Returns
 Performance Metrics (reported separately for IS and OOS)
 ```
 
-Performance metrics must be reported separately for IS and OOS periods using the canonical split defined in `v2_backtest_methodology_specification.md` §30.
+Performance metrics must be reported separately for IS and OOS periods using the canonical split defined in `backtest_methodology_specification.md` §30.
 
 ---
 

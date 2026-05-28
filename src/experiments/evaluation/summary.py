@@ -33,7 +33,7 @@ def build_exit_evaluation_summary(exit_robustness_payload: dict[str, object]) ->
     return {
         "evaluation_status": exit_robustness_payload.get("status"),
         "overall_robustness_score": exit_robustness.get("overall_robustness_score"),
-        "performance_stability_score": exit_robustness.get("performance_stability_score"),
+        "walk_forward_stability_score": exit_robustness.get("walk_forward_stability_score"),
     }
 
 

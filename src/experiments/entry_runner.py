@@ -20,12 +20,14 @@ from experiments.ranking import FactorVariantRef, RankCandidate, rank_factors_in
 from experiments.reporting import (
     build_entry_report_payload,
     build_rankings_payload,
-    default_metric_weights,
+    default_entry_metric_weights,
     metrics_dict,
     robustness_dict,
     write_json,
 )
 from experiments.resolution import resolve_unified_config
+from experiments.scoring.entry_metrics import build_entry_ranking_metrics
+from experiments.scoring.weights import ENTRY_HIGHER_IS_BETTER
 from experiments.segments import SegmentClassifier, SegmentLabels
 from experiments.signal_catalog import build_entry_signal, list_entry_variants
 from experiments.trade_simulator import simulate_entry_factor, trades_to_metrics
@@ -71,7 +73,7 @@ class EntryExperimentRunner:
                 security.security_id
             ]
 
-        metric_weights = default_metric_weights()
+        metric_weights = default_entry_metric_weights()
         if config.ranking.metric_weights:
             metric_weights.update(config.ranking.metric_weights)
 
@@ -145,8 +147,11 @@ class EntryExperimentRunner:
                                 variant_id=variant.variant_id,
                                 exit_horizon_months=horizon,
                             ),
-                            metrics,
-                            variant_robustness,
+                            build_entry_ranking_metrics(
+                                cross_section_payload=cross_section.cross_section_payload,
+                                trade_metrics=metrics,
+                                robustness_score=variant_robustness,
+                            ),
                             evaluation_summary,
                         )
                     )
@@ -179,6 +184,7 @@ class EntryExperimentRunner:
                 qualifying_percentile=config.ranking.qualifying_percentile,
                 min_qualifying_factors=config.ranking.min_qualifying_factors,
                 metric_weights=metric_weights,
+                higher_is_better=ENTRY_HIGHER_IS_BETTER,
             )
             segment_rankings[segment_key] = ranked
             thresholds[segment_key] = threshold

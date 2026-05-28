@@ -1,4 +1,4 @@
-# v2_factor_scoring_specification.md
+# factor_scoring_specification.md
 
 ## 1. Purpose
 
@@ -94,8 +94,8 @@ Identical inputs must produce identical scores.
 
 Consumes:
 
-- v2_entry_signal_specification.md
-- v2_universe_specification.md
+- entry_signal_specification.md
+- universe_specification.md
 
 Required inputs:
 
@@ -460,12 +460,12 @@ NVDA = 0.00
 
 Consumes:
 
-- v2_entry_signal_specification.md
+- entry_signal_specification.md
 
 Produces:
 
-- v2_factor_combination_specification.md
-- v2_result_schema_specification.md
+- factor_combination_specification.md
+- result_schema_specification.md
 
 Relationship:
 

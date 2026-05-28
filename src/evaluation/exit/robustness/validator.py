@@ -44,13 +44,14 @@ class ExitRobustnessValidator:
     def validate_config(self, config: ExitRobustnessConfig) -> ValidationReport:
         issues: list[ValidationIssue] = []
         total_weight = (
-            config.component_weights.performance_stability
-            + config.component_weights.regime_stability
-            + config.component_weights.parameter_stability
+            config.component_weights.trade_distribution_stability
             + config.component_weights.holding_period_stability
-            + config.component_weights.sample_stability
-            + config.component_weights.trade_distribution_stability
-            + config.component_weights.risk_stability
+            + config.component_weights.walk_forward_stability
+            + config.component_weights.out_of_sample_retention
+            + config.component_weights.market_regime_consistency
+            + config.component_weights.parameter_sensitivity
+            + config.component_weights.profit_capture_consistency
+            + config.component_weights.data_perturbation_resilience
         )
         if total_weight != Decimal("1"):
             issues.append(
@@ -73,13 +74,14 @@ class ExitRobustnessValidator:
     ) -> ValidationReport:
         issues: list[ValidationIssue] = []
         component_scores = {
-            "performance_stability_score": result.performance_stability_score,
-            "regime_stability_score": result.regime_stability_score,
-            "parameter_stability_score": result.parameter_stability_score,
-            "holding_period_stability_score": result.holding_period_stability_score,
-            "sample_stability_score": result.sample_stability_score,
             "trade_distribution_stability_score": result.trade_distribution_stability_score,
-            "risk_stability_score": result.risk_stability_score,
+            "holding_period_stability_score": result.holding_period_stability_score,
+            "walk_forward_stability_score": result.walk_forward_stability_score,
+            "out_of_sample_retention_score": result.out_of_sample_retention_score,
+            "market_regime_consistency_score": result.market_regime_consistency_score,
+            "parameter_sensitivity_score": result.parameter_sensitivity_score,
+            "profit_capture_consistency_score": result.profit_capture_consistency_score,
+            "data_perturbation_resilience_score": result.data_perturbation_resilience_score,
             "overall_robustness_score": result.overall_robustness_score,
         }
         for field_name, value in component_scores.items():
@@ -144,13 +146,14 @@ def _expected_overall_score(
 ) -> Decimal:
     weights = config.component_weights
     return quantize_score(
-        result.performance_stability_score * weights.performance_stability
-        + result.regime_stability_score * weights.regime_stability
-        + result.parameter_stability_score * weights.parameter_stability
+        result.trade_distribution_stability_score * weights.trade_distribution_stability
         + result.holding_period_stability_score * weights.holding_period_stability
-        + result.sample_stability_score * weights.sample_stability
-        + result.trade_distribution_stability_score * weights.trade_distribution_stability
-        + result.risk_stability_score * weights.risk_stability
+        + result.walk_forward_stability_score * weights.walk_forward_stability
+        + result.out_of_sample_retention_score * weights.out_of_sample_retention
+        + result.market_regime_consistency_score * weights.market_regime_consistency
+        + result.parameter_sensitivity_score * weights.parameter_sensitivity
+        + result.profit_capture_consistency_score * weights.profit_capture_consistency
+        + result.data_perturbation_resilience_score * weights.data_perturbation_resilience
     )
 
 

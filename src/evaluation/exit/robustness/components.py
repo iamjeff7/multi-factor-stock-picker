@@ -256,3 +256,27 @@ def score_risk_stability(
         Decimal("1"),
     )
     return average([drawdown_score, volatility_score, tail_score, loss_distribution_score])
+
+
+def score_out_of_sample_retention(
+    inputs: ExitSampleStabilityInput,
+    *,
+    config: ExitRobustnessConfig,
+) -> Decimal:
+    return score_sample_stability(inputs, config=config)
+
+
+def score_walk_forward_stability(
+    inputs: PerformanceStabilityInput,
+    *,
+    config: ExitRobustnessConfig,
+) -> Decimal:
+    return score_performance_stability(inputs, config=config)
+
+
+def score_profit_capture_consistency(capture_ratios: list[Decimal]) -> Decimal:
+    if not capture_ratios:
+        return Decimal("0")
+    mean_capture = average(capture_ratios)
+    dispersion = normalized_spread(capture_ratios)
+    return average([mean_capture, Decimal("1") - dispersion])

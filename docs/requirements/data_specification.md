@@ -312,7 +312,7 @@ Checks:
 
 ### 9.5 Research Calendar Validation
 
-Production research datasets must support the canonical research calendar defined in `v2_backtest_methodology_specification.md` §30.
+Production research datasets must support the canonical research calendar defined in `backtest_methodology_specification.md` §30.
 
 Checks:
 
@@ -464,7 +464,7 @@ Requirements:
 
 Shorter windows are permitted only for demo or test execution with explicit configuration override.
 
-Cross-reference: `v2_backtest_methodology_specification.md` §30 Validation Framework.
+Cross-reference: `backtest_methodology_specification.md` §30 Validation Framework.
 
 ---
 

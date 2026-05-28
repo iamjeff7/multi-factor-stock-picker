@@ -83,12 +83,13 @@ class ExitRobustnessInputs(BaseModel):
 
 class ExitRobustnessResult(BaseModel):
     exit_signal_id: SignalId
-    performance_stability_score: Decimal
-    regime_stability_score: Decimal
-    parameter_stability_score: Decimal
-    holding_period_stability_score: Decimal
-    sample_stability_score: Decimal
     trade_distribution_stability_score: Decimal
-    risk_stability_score: Decimal
+    holding_period_stability_score: Decimal
+    walk_forward_stability_score: Decimal
+    out_of_sample_retention_score: Decimal
+    market_regime_consistency_score: Decimal
+    parameter_sensitivity_score: Decimal
+    profit_capture_consistency_score: Decimal
+    data_perturbation_resilience_score: Decimal
     overall_robustness_score: Decimal
     robustness_classification: str

@@ -1,4 +1,4 @@
-# v2_information_coefficient_specification.md
+# information_coefficient_specification.md
 
 ## 1. Purpose
 
@@ -30,9 +30,9 @@ This specification does not define:
 
 ### References
 
-- v2_backtest_methodology_specification.md (§30 Validation Framework)
-- v2_factor_scoring_specification.md
-- v2_result_schema_specification.md
+- backtest_methodology_specification.md (§30 Validation Framework)
+- factor_scoring_specification.md
+- result_schema_specification.md
 
 ---
 
@@ -74,7 +74,7 @@ Identical inputs must produce identical IC results.
 
 Consumes outputs from:
 
-- v2_factor_scoring_specification.md
+- factor_scoring_specification.md
 
 Required inputs:
 
@@ -445,7 +445,7 @@ OOS
 FULL
 ```
 
-IC summaries must be computed separately for IS and OOS using the canonical trading-day split defined in `v2_backtest_methodology_specification.md` §30.
+IC summaries must be computed separately for IS and OOS using the canonical trading-day split defined in `backtest_methodology_specification.md` §30.
 
 Daily IC observations are assigned to a sample period by `evaluation_date`.
 
@@ -545,14 +545,14 @@ horizons:
 
 Consumes:
 
-- v2_factor_scoring_specification.md
-- v2_backtest_methodology_specification.md
+- factor_scoring_specification.md
+- backtest_methodology_specification.md
 
 Produces:
 
-- v2_factor_performance_specification.md
-- v2_entry_robustness_scoring_specification.md
-- v2_result_schema_specification.md
+- factor_performance_specification.md
+- entry_robustness_scoring_specification.md
+- result_schema_specification.md
 
 Relationship:
 

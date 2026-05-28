@@ -1,4 +1,4 @@
-# v2_factor_combination_specification.md
+# factor_combination_specification.md
 
 ## 1. Purpose
 
@@ -74,7 +74,7 @@ Composite score calculations must be fully explainable and reproducible.
 
 Consumes outputs from:
 
-- v2_factor_scoring_specification.md
+- factor_scoring_specification.md
 
 Required fields:
 
@@ -453,12 +453,12 @@ minimum_factor_coverage_pct: 0.50
 
 Consumes:
 
-- v2_factor_scoring_specification.md
+- factor_scoring_specification.md
 
 Produces:
 
-- v2_portfolio_construction_specification.md
-- v2_result_schema_specification.md
+- portfolio_construction_specification.md
+- result_schema_specification.md
 
 Relationship:
 

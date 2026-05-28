@@ -128,24 +128,28 @@ def aggregate_metrics(metrics_list: list[PerformanceMetrics]) -> PerformanceMetr
 
 def metrics_to_ranking_dict(metrics: PerformanceMetrics) -> dict[str, Decimal | None]:
     return {
-        "cagr": metrics.cagr,
-        "total_return": metrics.total_return,
         "sharpe_ratio": metrics.sharpe_ratio,
-        "max_drawdown": metrics.max_drawdown,
-        "trades_per_trading_year": metrics.trades_per_trading_year,
-        "trades_per_trading_days": metrics.trades_per_trading_days,
-        "trades_per_month": metrics.trades_per_month,
+        "maximum_drawdown": metrics.max_drawdown,
+        "turnover_efficiency": _turnover_efficiency(metrics),
     }
 
 
+def _turnover_efficiency(metrics: PerformanceMetrics) -> Decimal | None:
+    if metrics.total_return is None or metrics.trades_per_trading_year is None:
+        return None
+    if metrics.trades_per_trading_year <= Decimal("0"):
+        return None
+    return metrics.total_return / metrics.trades_per_trading_year
+
+
 DEFAULT_METRIC_WEIGHTS: dict[str, Decimal] = {
-    "cagr": Decimal("0.20"),
-    "total_return": Decimal("0.15"),
-    "sharpe_ratio": Decimal("0.25"),
-    "max_drawdown": Decimal("0.20"),
-    "trades_per_trading_year": Decimal("0.05"),
-    "trades_per_trading_days": Decimal("0.075"),
-    "trades_per_month": Decimal("0.075"),
+    "forward_return": Decimal("0.40"),
+    "information_coefficient": Decimal("0.20"),
+    "hit_rate": Decimal("0.15"),
+    "sharpe_ratio": Decimal("0.10"),
+    "maximum_drawdown": Decimal("0.05"),
+    "turnover_efficiency": Decimal("0.05"),
+    "robustness_score": Decimal("0.05"),
 }
 
 

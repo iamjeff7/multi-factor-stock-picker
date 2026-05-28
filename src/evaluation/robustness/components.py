@@ -213,3 +213,52 @@ def score_sample_stability(
     )
     hit_consistency = Decimal("1") - normalized_spread(hit_values)
     return average([ic_consistency, return_consistency, hit_consistency])
+
+
+def score_out_of_sample_retention(
+    inputs: SampleStabilityInput,
+    *,
+    config: EntryRobustnessConfig,
+) -> Decimal:
+    return score_sample_stability(inputs, config=config)
+
+
+def score_walk_forward_stability_from_ic_series(
+    ic_values: list[Decimal],
+    *,
+    config: EntryRobustnessConfig,
+) -> Decimal:
+    if len(ic_values) < 4:
+        return Decimal("0")
+    window = max(3, len(ic_values) // 4)
+    window_means: list[Decimal] = []
+    for index in range(0, len(ic_values) - window + 1, window):
+        chunk = ic_values[index : index + window]
+        window_means.append(sum(chunk, start=Decimal("0")) / Decimal(len(chunk)))
+    if len(window_means) < 2:
+        return Decimal("0")
+    spread = normalized_spread(
+        [
+            normalize_linear(
+                value,
+                floor=config.ic_level_floor,
+                ceiling=config.ic_level_ceiling,
+            )
+            for value in window_means
+        ]
+    )
+    return Decimal("1") - spread
+
+
+def score_factor_decay_resistance(ic_values: list[Decimal]) -> Decimal:
+    if len(ic_values) < 4:
+        return Decimal("0")
+    midpoint = len(ic_values) // 2
+    first_half = ic_values[:midpoint]
+    second_half = ic_values[midpoint:]
+    first_mean = sum(first_half, start=Decimal("0")) / Decimal(len(first_half))
+    second_mean = sum(second_half, start=Decimal("0")) / Decimal(len(second_half))
+    if first_mean <= Decimal("0"):
+        return clamp(second_mean + Decimal("1"), Decimal("0"), Decimal("1"))
+    retention = second_mean / first_mean
+    return clamp(retention, Decimal("0"), Decimal("1"))

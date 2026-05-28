@@ -3,8 +3,8 @@
 from decimal import Decimal
 
 from experiments.enums import SegmentRegime, SegmentTertile
-from experiments.metrics import PerformanceMetrics
 from experiments.ranking import FactorVariantRef, rank_factors_in_segment
+from experiments.scoring.weights import DEFAULT_ENTRY_METRIC_WEIGHTS, ENTRY_HIGHER_IS_BETTER
 from experiments.segments import SegmentLabels
 
 
@@ -17,28 +17,30 @@ def test_rank_factors_uses_percentile_threshold() -> None:
         liquidity=SegmentTertile.HIGH,
     )
     candidates = []
-    for index, cagr in enumerate(("0.01", "0.02", "0.03", "0.04", "0.20")):
+    for index, forward_return in enumerate(("0.01", "0.02", "0.03", "0.04", "0.20")):
         candidates.append(
             (
                 FactorVariantRef(signal_id="momentum_12_1", variant_id=f"v{index}"),
-                PerformanceMetrics(
-                    total_return=Decimal(cagr),
-                    cagr=Decimal(cagr),
-                    sharpe_ratio=Decimal(cagr),
-                    max_drawdown=Decimal("-0.05"),
-                    round_trips=10,
-                    trading_days=252,
-                    calendar_months=Decimal("12"),
-                    trades_per_trading_days=Decimal("0.04"),
-                    trades_per_month=Decimal("0.83"),
-                    trades_per_trading_year=Decimal("10"),
-                ),
-                Decimal("0.8"),
+                {
+                    "forward_return": Decimal(forward_return),
+                    "information_coefficient": Decimal(forward_return),
+                    "hit_rate": Decimal("0.6"),
+                    "sharpe_ratio": Decimal(forward_return),
+                    "maximum_drawdown": Decimal("-0.05"),
+                    "turnover_efficiency": Decimal(forward_return),
+                    "robustness_score": Decimal("0.8"),
+                },
                 None,
             )
         )
 
-    threshold, ranked = rank_factors_in_segment(candidates, segment, qualifying_percentile=95)
+    threshold, ranked = rank_factors_in_segment(
+        candidates,
+        segment,
+        qualifying_percentile=95,
+        metric_weights=DEFAULT_ENTRY_METRIC_WEIGHTS,
+        higher_is_better=ENTRY_HIGHER_IS_BETTER,
+    )
     qualified = [row for row in ranked if row.qualified]
     assert threshold >= Decimal("0")
     assert len(qualified) >= 1

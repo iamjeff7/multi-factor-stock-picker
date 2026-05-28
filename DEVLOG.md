@@ -33,7 +33,7 @@
 
 ## Session 2 — 2026-05-23 22:04:26
 
-- Goal: Implement the data and universe layer per v2_data and v2_universe specifications — loading, validation, PIT access, and universe construction (no signals or backtesting)
+- Goal: Implement the data and universe layer per data and universe specifications — loading, validation, PIT access, and universe construction (no signals or backtesting)
 
 - What I Built:
   - `src/data/loaders/` — DatasetManifest, ParquetLoader, LoadedDataset
@@ -132,7 +132,7 @@
 
 ## Session 5 — 2026-05-25 19:13:29
 
-- Goal: Implement validated result persistence per v2_result_schema_specification.md
+- Goal: Implement validated result persistence per result_schema_specification.md
 
 - What I Built:
   - `src/reporting/stores/` — InMemoryResultStore, ParquetResultStore, ValidatingResultStore
@@ -283,3 +283,37 @@
 - Tasks Completed:
   - Unified cross-section factor evaluation for entry/exit experiments
   - Legacy experiment pipeline cleanup
+
+## Session 13 — 2026-05-28 22:47:51
+
+- Goal: Align experiment scoring with specs, implement entry/exit/combined ranking and robustness updates, drop v2_ spec prefix, and reset the task backlog
+
+- What I Built:
+  - `docs/requirements/experiment_scoring_specification.md` — consolidated entry/exit/combined metric weights and composite scores
+  - `docs/requirements/combined_strategy_robustness_specification.md` — combined robustness dimensions and weights
+  - `docs/requirements/entry_robustness_scoring_specification.md`, `exit_robustness_scoring_specification.md`, `result_schema_specification.md` — finalized 8-dimension weights and experiment scoring outputs
+  - `docs/requirements/*.md` — renamed 14 spec files to drop `v2_` prefix; updated cross-references
+  - `src/experiments/scoring/` — entry/exit/combined metrics, weights, and composite scoring
+  - `src/experiments/entry_runner.py`, `exit_runner.py`, `combined_runner.py`, `ranking.py`, `reporting.py`, `trade_simulator.py` — new ranking metrics, baseline exit comparison, combined final_strategy_score
+  - `src/evaluation/robustness/`, `src/evaluation/exit/robustness/`, `src/evaluation/combined/robustness/` — updated configs, scorers, validators; combined stub scorer
+  - `src/backtest/entry_robustness.py`, `exit_robustness.py` — aligned dimension weights and retired dimensions
+  - `tests/experiments/test_combined_scoring.py`, updated ranking/robustness/evaluation tests
+  - `CLAUDE.md` — slimmed to spec pointers; removed inline metric YAML
+  - `.claude/tasks.md`, `requirements.md`, `session.md` — cleared backlog and restarted at Task 1 (broad dataset download)
+
+- Decisions Made:
+  - Entry ranking uses 7 additive metrics (forward return, IC, hit rate, Sharpe, max drawdown, turnover efficiency, robustness) — robustness is a weighted term, not a multiplicative penalty
+  - Exit ranking compares against a fixed-period baseline exit (default 3 months) for trade_return_improvement, profit capture, and Sharpe/drawdown deltas
+  - Robustness weights finalized at 8 dimensions per layer (entry/exit/combined); retired rank/breadth/risk stability dimensions
+  - Combined alpha/beta and combined robustness left stubbed pending benchmark resolution and richer data
+
+- What Didn't Work:
+  - Combined alpha/beta — `_benchmark_returns()` stubbed because `DataAccess` lacks `resolve_security_id`; metrics often return None
+  - Combined robustness scorer returns 0 — all eight dimensions still pending implementation
+
+- Tasks Completed:
+  - Experiment scoring spec consolidation and CLAUDE.md slim-down
+  - Entry/exit/combined ranking metric alignment
+  - Robustness model update (8-dimension weights, retired dimensions)
+  - v2_ spec prefix removal
+  - Task backlog reset (Tasks 1–10: data download through signal catalog expansion)

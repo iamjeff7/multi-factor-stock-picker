@@ -10,24 +10,26 @@ from evaluation.robustness.config import ClassificationThresholds
 
 
 class ExitComponentWeights(BaseModel):
-    performance_stability: Decimal = Decimal("0.25")
-    regime_stability: Decimal = Decimal("0.15")
-    parameter_stability: Decimal = Decimal("0.20")
-    holding_period_stability: Decimal = Decimal("0.10")
-    sample_stability: Decimal = Decimal("0.10")
     trade_distribution_stability: Decimal = Decimal("0.10")
-    risk_stability: Decimal = Decimal("0.10")
+    holding_period_stability: Decimal = Decimal("0.10")
+    walk_forward_stability: Decimal = Decimal("0.20")
+    out_of_sample_retention: Decimal = Decimal("0.20")
+    market_regime_consistency: Decimal = Decimal("0.15")
+    parameter_sensitivity: Decimal = Decimal("0.10")
+    profit_capture_consistency: Decimal = Decimal("0.10")
+    data_perturbation_resilience: Decimal = Decimal("0.05")
 
     @model_validator(mode="after")
     def validate_total_weight(self) -> ExitComponentWeights:
         total = (
-            self.performance_stability
-            + self.regime_stability
-            + self.parameter_stability
+            self.trade_distribution_stability
             + self.holding_period_stability
-            + self.sample_stability
-            + self.trade_distribution_stability
-            + self.risk_stability
+            + self.walk_forward_stability
+            + self.out_of_sample_retention
+            + self.market_regime_consistency
+            + self.parameter_sensitivity
+            + self.profit_capture_consistency
+            + self.data_perturbation_resilience
         )
         if total != Decimal("1"):
             raise ValueError(f"Component weights must sum to 1.0, got {total}")

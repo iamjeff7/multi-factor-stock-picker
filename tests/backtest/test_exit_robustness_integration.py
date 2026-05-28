@@ -74,7 +74,11 @@ def test_compute_partial_exit_robustness_scores_trade_dimensions() -> None:
 
     assert evaluation is not None
     assert evaluation.result is not None
-    assert evaluation.pending_dimensions == ["parameter_stability", "regime_stability"]
-    assert evaluation.result.performance_stability_score > Decimal("0")
-    assert evaluation.result.sample_stability_score >= Decimal("0")
+    assert set(evaluation.pending_dimensions) == {
+        "market_regime_consistency",
+        "parameter_sensitivity",
+        "data_perturbation_resilience",
+    }
+    assert evaluation.result.walk_forward_stability_score > Decimal("0")
+    assert evaluation.result.out_of_sample_retention_score >= Decimal("0")
     assert Decimal("0") <= evaluation.result.overall_robustness_score <= Decimal("1")

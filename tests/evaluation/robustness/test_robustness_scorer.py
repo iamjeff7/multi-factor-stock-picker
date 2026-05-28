@@ -28,11 +28,12 @@ def test_strong_signal_receives_high_overall_score() -> None:
     for component in (
         result.ic_stability_score,
         result.return_stability_score,
-        result.regime_stability_score,
-        result.parameter_stability_score,
-        result.rank_stability_score,
-        result.breadth_stability_score,
-        result.sample_stability_score,
+        result.walk_forward_stability_score,
+        result.out_of_sample_retention_score,
+        result.market_regime_consistency_score,
+        result.parameter_sensitivity_score,
+        result.factor_decay_resistance_score,
+        result.data_perturbation_resilience_score,
     ):
         assert Decimal("0") <= component <= Decimal("1")
 
@@ -58,11 +59,12 @@ def test_overall_score_matches_weighted_sum() -> None:
     expected = quantize_score(
         result.ic_stability_score * weights.ic_stability
         + result.return_stability_score * weights.return_stability
-        + result.regime_stability_score * weights.regime_stability
-        + result.parameter_stability_score * weights.parameter_stability
-        + result.rank_stability_score * weights.rank_stability
-        + result.breadth_stability_score * weights.breadth_stability
-        + result.sample_stability_score * weights.sample_stability
+        + result.walk_forward_stability_score * weights.walk_forward_stability
+        + result.out_of_sample_retention_score * weights.out_of_sample_retention
+        + result.market_regime_consistency_score * weights.market_regime_consistency
+        + result.parameter_sensitivity_score * weights.parameter_sensitivity
+        + result.factor_decay_resistance_score * weights.factor_decay_resistance
+        + result.data_perturbation_resilience_score * weights.data_perturbation_resilience
     )
     assert result.overall_robustness_score == expected
 
@@ -73,11 +75,12 @@ def test_invalid_component_weights_raise_validation_error() -> None:
             component_weights=ComponentWeights(
                 ic_stability=Decimal("0.50"),
                 return_stability=Decimal("0.50"),
-                regime_stability=Decimal("0.50"),
-                parameter_stability=Decimal("0"),
-                rank_stability=Decimal("0"),
-                breadth_stability=Decimal("0"),
-                sample_stability=Decimal("0"),
+                walk_forward_stability=Decimal("0.50"),
+                out_of_sample_retention=Decimal("0"),
+                market_regime_consistency=Decimal("0"),
+                parameter_sensitivity=Decimal("0"),
+                factor_decay_resistance=Decimal("0"),
+                data_perturbation_resilience=Decimal("0"),
             )
         )
 

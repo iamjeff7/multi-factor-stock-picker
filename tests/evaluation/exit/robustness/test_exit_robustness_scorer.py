@@ -28,13 +28,14 @@ def test_strong_exit_signal_receives_high_overall_score() -> None:
         RobustnessClassification.GOOD.value,
     }
     for component in (
-        result.performance_stability_score,
-        result.regime_stability_score,
-        result.parameter_stability_score,
-        result.holding_period_stability_score,
-        result.sample_stability_score,
         result.trade_distribution_stability_score,
-        result.risk_stability_score,
+        result.holding_period_stability_score,
+        result.walk_forward_stability_score,
+        result.out_of_sample_retention_score,
+        result.market_regime_consistency_score,
+        result.parameter_sensitivity_score,
+        result.profit_capture_consistency_score,
+        result.data_perturbation_resilience_score,
     ):
         assert Decimal("0") <= component <= Decimal("1")
 
@@ -53,13 +54,14 @@ def test_overall_score_matches_weighted_sum() -> None:
     weights = scorer.config.component_weights
 
     expected = quantize_score(
-        result.performance_stability_score * weights.performance_stability
-        + result.regime_stability_score * weights.regime_stability
-        + result.parameter_stability_score * weights.parameter_stability
+        result.trade_distribution_stability_score * weights.trade_distribution_stability
         + result.holding_period_stability_score * weights.holding_period_stability
-        + result.sample_stability_score * weights.sample_stability
-        + result.trade_distribution_stability_score * weights.trade_distribution_stability
-        + result.risk_stability_score * weights.risk_stability
+        + result.walk_forward_stability_score * weights.walk_forward_stability
+        + result.out_of_sample_retention_score * weights.out_of_sample_retention
+        + result.market_regime_consistency_score * weights.market_regime_consistency
+        + result.parameter_sensitivity_score * weights.parameter_sensitivity
+        + result.profit_capture_consistency_score * weights.profit_capture_consistency
+        + result.data_perturbation_resilience_score * weights.data_perturbation_resilience
     )
     assert result.overall_robustness_score == expected
 
@@ -68,13 +70,14 @@ def test_invalid_component_weights_raise_validation_error() -> None:
     with pytest.raises(ValueError, match="Component weights must sum to 1.0"):
         ExitRobustnessConfig(
             component_weights=ExitComponentWeights(
-                performance_stability=Decimal("0.50"),
-                regime_stability=Decimal("0.50"),
-                parameter_stability=Decimal("0.50"),
-                holding_period_stability=Decimal("0"),
-                sample_stability=Decimal("0"),
-                trade_distribution_stability=Decimal("0"),
-                risk_stability=Decimal("0"),
+                trade_distribution_stability=Decimal("0.50"),
+                holding_period_stability=Decimal("0.50"),
+                walk_forward_stability=Decimal("0.50"),
+                out_of_sample_retention=Decimal("0"),
+                market_regime_consistency=Decimal("0"),
+                parameter_sensitivity=Decimal("0"),
+                profit_capture_consistency=Decimal("0"),
+                data_perturbation_resilience=Decimal("0"),
             )
         )
 
@@ -86,7 +89,7 @@ def test_mapping_to_robustness_score_record() -> None:
 
     assert record.experiment_id == ExperimentId("exp_exit_001")
     assert record.robustness_score == result.overall_robustness_score
-    assert record.stability_score == result.performance_stability_score
+    assert record.stability_score == result.walk_forward_stability_score
     assert record.overall_grade in {RobustnessGrade.A, RobustnessGrade.B, RobustnessGrade.C}
 
 

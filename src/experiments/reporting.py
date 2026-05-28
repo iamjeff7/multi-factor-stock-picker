@@ -8,7 +8,10 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from experiments.metrics import DEFAULT_METRIC_WEIGHTS, PerformanceMetrics
+from experiments.scoring.weights import (
+    DEFAULT_ENTRY_METRIC_WEIGHTS,
+    DEFAULT_EXIT_METRIC_WEIGHTS,
+)
 from experiments.ranking import RankedFactor
 from reporting.layout import ResultLayout
 from schemas.enums import RobustnessGrade
@@ -51,7 +54,7 @@ def build_rankings_payload(
         "experiment_id": experiment_id,
         "experiment_mode": experiment_mode,
         "generated_at": datetime.now(tz=UTC).isoformat(),
-        "ranking_method": "percentile_weighted_with_robustness_penalty",
+        "ranking_method": "percentile_weighted_composite",
         "selection_method": "percentile_threshold_voting",
         "qualifying_percentile": 95,
         "min_qualifying_factors": 1,
@@ -164,8 +167,16 @@ def _ranked_factor_dict(ranked: RankedFactor) -> dict[str, object]:
     return payload
 
 
+def default_entry_metric_weights() -> dict[str, Decimal]:
+    return dict(DEFAULT_ENTRY_METRIC_WEIGHTS)
+
+
+def default_exit_metric_weights() -> dict[str, Decimal]:
+    return dict(DEFAULT_EXIT_METRIC_WEIGHTS)
+
+
 def default_metric_weights() -> dict[str, Decimal]:
-    return dict(DEFAULT_METRIC_WEIGHTS)
+    return default_entry_metric_weights()
 
 
 def robustness_dict(

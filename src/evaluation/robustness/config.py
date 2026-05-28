@@ -8,24 +8,26 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class ComponentWeights(BaseModel):
-    ic_stability: Decimal = Decimal("0.25")
-    return_stability: Decimal = Decimal("0.20")
-    regime_stability: Decimal = Decimal("0.15")
-    parameter_stability: Decimal = Decimal("0.15")
-    rank_stability: Decimal = Decimal("0.10")
-    breadth_stability: Decimal = Decimal("0.10")
-    sample_stability: Decimal = Decimal("0.05")
+    ic_stability: Decimal = Decimal("0.15")
+    return_stability: Decimal = Decimal("0.10")
+    walk_forward_stability: Decimal = Decimal("0.20")
+    out_of_sample_retention: Decimal = Decimal("0.20")
+    market_regime_consistency: Decimal = Decimal("0.15")
+    parameter_sensitivity: Decimal = Decimal("0.10")
+    factor_decay_resistance: Decimal = Decimal("0.05")
+    data_perturbation_resilience: Decimal = Decimal("0.05")
 
     @model_validator(mode="after")
     def validate_total_weight(self) -> ComponentWeights:
         total = (
             self.ic_stability
             + self.return_stability
-            + self.regime_stability
-            + self.parameter_stability
-            + self.rank_stability
-            + self.breadth_stability
-            + self.sample_stability
+            + self.walk_forward_stability
+            + self.out_of_sample_retention
+            + self.market_regime_consistency
+            + self.parameter_sensitivity
+            + self.factor_decay_resistance
+            + self.data_perturbation_resilience
         )
         if total != Decimal("1"):
             raise ValueError(f"Component weights must sum to 1.0, got {total}")

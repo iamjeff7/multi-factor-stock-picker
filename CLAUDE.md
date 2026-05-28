@@ -17,18 +17,20 @@ Never read, search, or reference any file under `archive/`. Use `docs/` for spec
 multi-factor-stock-picker/
 ├── docs/
 │   ├── requirements/
-│   │   ├── v2_data_specification.md
-│   │   ├── v2_universe_specification.md
-│   │   ├── v2_entry_signal_specification.md
-│   │   ├── v2_exit_signal_specification.md
-│   │   ├── v2_backtest_methodology_specification.md
-│   │   ├── v2_result_schema_specification.md
-│   │   ├── v2_factor_scoring_specification.md
-│   │   ├── v2_factor_combination_specification.md
-│   │   ├── v2_information_coefficient_specification.md
-│   │   ├── v2_factor_performance_specification.md
-│   │   ├── v2_entry_robustness_scoring_specification.md
-│   │   └── v2_exit_robustness_scoring_specification.md
+│   │   ├── data_specification.md
+│   │   ├── universe_specification.md
+│   │   ├── entry_signal_specification.md
+│   │   ├── exit_signal_specification.md
+│   │   ├── backtest_methodology_specification.md
+│   │   ├── result_schema_specification.md
+│   │   ├── factor_scoring_specification.md
+│   │   ├── factor_combination_specification.md
+│   │   ├── information_coefficient_specification.md
+│   │   ├── factor_performance_specification.md
+│   │   ├── experiment_scoring_specification.md
+│   │   ├── entry_robustness_scoring_specification.md
+│   │   ├── exit_robustness_scoring_specification.md
+│   │   └── combined_strategy_robustness_specification.md
 │   │
 │   └── experiments/
 │
@@ -105,3 +107,7 @@ multi-factor-stock-picker/
 │
 └── tests/
 ```
+
+## Experiment scoring
+
+See [`docs/requirements/experiment_scoring_specification.md`](docs/requirements/experiment_scoring_specification.md) for entry, exit, and combined metric weights and composite scores. Robustness dimensions are in the `*_robustness` specs under `docs/requirements/`.

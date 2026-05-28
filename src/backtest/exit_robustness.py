@@ -10,10 +10,10 @@ from backtest.exit_robustness_models import ExitRobustnessEvaluation
 from core.types import SignalId
 from evaluation.exit.robustness.components import (
     score_holding_period_stability,
-    score_performance_stability,
-    score_risk_stability,
-    score_sample_stability,
+    score_out_of_sample_retention,
+    score_profit_capture_consistency,
     score_trade_distribution_stability,
+    score_walk_forward_stability,
 )
 from evaluation.exit.robustness.config import ExitRobustnessConfig
 from evaluation.exit.robustness.sample_inputs import (
@@ -35,16 +35,17 @@ from schemas.exit_robustness import (
 from schemas.results import TradeRecord
 
 PENDING_EXIT_ROBUSTNESS_DIMENSIONS = (
-    "regime_stability",
-    "parameter_stability",
+    "market_regime_consistency",
+    "parameter_sensitivity",
+    "data_perturbation_resilience",
 )
 
 ACTIVE_EXIT_ROBUSTNESS_WEIGHT_KEYS = (
-    "performance_stability",
-    "sample_stability",
-    "holding_period_stability",
     "trade_distribution_stability",
-    "risk_stability",
+    "holding_period_stability",
+    "walk_forward_stability",
+    "out_of_sample_retention",
+    "profit_capture_consistency",
 )
 
 _HOLDING_PERIOD_BUCKETS: tuple[tuple[str, int, int | None], ...] = (
@@ -80,13 +81,12 @@ def compute_partial_exit_robustness(
         pending_dimensions.append("holding_period_stability")
 
     trade_distribution_stability = _build_trade_distribution_stability(closed)
-    risk_stability = _build_risk_stability(closed)
 
     performance_stability_score = quantize_score(
-        score_performance_stability(performance_stability, config=scoring_config)
+        score_walk_forward_stability(performance_stability, config=scoring_config)
     )
-    sample_stability_score = quantize_score(
-        score_sample_stability(sample_stability, config=scoring_config)
+    out_of_sample_retention_score = quantize_score(
+        score_out_of_sample_retention(sample_stability, config=scoring_config)
     )
     holding_period_stability_score = quantize_score(
         score_holding_period_stability(holding_period_stability, config=scoring_config)
@@ -96,17 +96,17 @@ def compute_partial_exit_robustness(
     trade_distribution_stability_score = quantize_score(
         score_trade_distribution_stability(trade_distribution_stability, config=scoring_config)
     )
-    risk_stability_score = quantize_score(
-        score_risk_stability(risk_stability, config=scoring_config)
+    profit_capture_consistency_score = quantize_score(
+        score_profit_capture_consistency(_profit_capture_ratios(closed))
     )
 
     weights = scoring_config.component_weights
     component_scores = {
-        "performance_stability": performance_stability_score,
-        "sample_stability": sample_stability_score,
-        "holding_period_stability": holding_period_stability_score,
         "trade_distribution_stability": trade_distribution_stability_score,
-        "risk_stability": risk_stability_score,
+        "holding_period_stability": holding_period_stability_score,
+        "walk_forward_stability": performance_stability_score,
+        "out_of_sample_retention": out_of_sample_retention_score,
+        "profit_capture_consistency": profit_capture_consistency_score,
     }
     active_weight = sum(
         getattr(weights, key)
@@ -133,13 +133,14 @@ def compute_partial_exit_robustness(
         exit_signal_id=exit_signal_id,
         result=ExitRobustnessResult(
             exit_signal_id=exit_signal_id,
-            performance_stability_score=performance_stability_score,
-            regime_stability_score=Decimal("0"),
-            parameter_stability_score=Decimal("0"),
-            holding_period_stability_score=holding_period_stability_score,
-            sample_stability_score=sample_stability_score,
             trade_distribution_stability_score=trade_distribution_stability_score,
-            risk_stability_score=risk_stability_score,
+            holding_period_stability_score=holding_period_stability_score,
+            walk_forward_stability_score=performance_stability_score,
+            out_of_sample_retention_score=out_of_sample_retention_score,
+            market_regime_consistency_score=Decimal("0"),
+            parameter_sensitivity_score=Decimal("0"),
+            profit_capture_consistency_score=profit_capture_consistency_score,
+            data_perturbation_resilience_score=Decimal("0"),
             overall_robustness_score=overall_robustness_score,
             robustness_classification=classification.value,
         ),
@@ -285,3 +286,23 @@ def _trade_returns(trades: Sequence[TradeRecord]) -> list[Decimal]:
             cost_basis = trade.entry_price * trade.shares
             returns.append(trade.net_pnl / cost_basis)
     return returns
+
+
+def _profit_capture_ratios(trades: Sequence[TradeRecord]) -> list[Decimal]:
+    ratios: list[Decimal] = []
+    for trade in trades:
+        if trade.exit_date is None or trade.entry_price <= Decimal("0"):
+            continue
+        if trade.return_pct is not None:
+            realized = trade.return_pct
+        elif trade.net_pnl is not None and trade.shares > Decimal("0"):
+            cost_basis = trade.entry_price * trade.shares
+            realized = trade.net_pnl / cost_basis
+        else:
+            exit_price = trade.exit_price or trade.entry_price
+            realized = (exit_price / trade.entry_price) - Decimal("1")
+        if realized <= Decimal("0"):
+            ratios.append(Decimal("0"))
+            continue
+        ratios.append(min(Decimal("1"), realized))
+    return ratios

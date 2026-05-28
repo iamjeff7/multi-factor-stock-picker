@@ -1,11 +1,14 @@
-"""Factor ranking with percentile normalization and robustness penalty."""
+"""Factor ranking with percentile normalization and weighted composite scores."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
 
-from experiments.metrics import DEFAULT_METRIC_WEIGHTS, PerformanceMetrics, metrics_to_ranking_dict
+from experiments.scoring.weights import (
+    DEFAULT_ENTRY_METRIC_WEIGHTS,
+    ENTRY_HIGHER_IS_BETTER,
+)
 from experiments.segments import SegmentLabels
 
 
@@ -24,7 +27,6 @@ class FactorScoreBreakdown:
     metric_weights: dict[str, Decimal]
     weighted_metric_score: Decimal
     robustness_score: Decimal | None
-    robustness_penalty: Decimal
     final_score: Decimal
     rank: int | None = None
     evaluation_summary: dict[str, object] | None = None
@@ -41,7 +43,6 @@ class FactorScoreBreakdown:
             "robustness_score": (
                 str(self.robustness_score) if self.robustness_score is not None else None
             ),
-            "robustness_penalty": str(self.robustness_penalty),
             "final_score": str(self.final_score),
             "rank": self.rank,
         }
@@ -76,27 +77,18 @@ def percentile_rank(value: Decimal, values: list[Decimal], *, higher_is_better: 
 
 
 def compute_factor_score(
-    metrics: PerformanceMetrics,
+    metrics: dict[str, Decimal | None],
     *,
-    robustness_score: Decimal | None,
-    peer_metrics: list[PerformanceMetrics],
-    metric_weights: dict[str, Decimal] | None = None,
+    metric_weights: dict[str, Decimal],
+    higher_is_better: dict[str, bool],
+    peer_metrics: list[dict[str, Decimal | None]],
     evaluation_summary: dict[str, object] | None = None,
 ) -> FactorScoreBreakdown:
-    weights = metric_weights or DEFAULT_METRIC_WEIGHTS
-    raw = metrics_to_ranking_dict(metrics)
+    weights = metric_weights
+    raw = dict(metrics)
+    robustness_score = raw.get("robustness_score")
 
-    higher_is_better = {
-        "cagr": True,
-        "total_return": True,
-        "sharpe_ratio": True,
-        "max_drawdown": False,
-        "trades_per_trading_year": True,
-        "trades_per_trading_days": True,
-        "trades_per_month": True,
-    }
-
-    peer_raw = [metrics_to_ranking_dict(peer) for peer in peer_metrics]
+    peer_raw = [dict(peer) for peer in peer_metrics]
     percentile_ranks: dict[str, Decimal] = {}
     for metric_name in weights:
         values = [
@@ -105,21 +97,20 @@ def compute_factor_score(
             if row.get(metric_name) is not None
         ]
         current = raw.get(metric_name)
+        direction = higher_is_better.get(metric_name, True)
         if current is None or not values:
             percentile_ranks[metric_name] = Decimal("0.5")
             continue
         percentile_ranks[metric_name] = percentile_rank(
             current,
             values,
-            higher_is_better=higher_is_better[metric_name],
+            higher_is_better=direction,
         )
 
     weighted_metric_score = sum(
         (weights[name] * percentile_ranks[name] for name in weights),
         Decimal("0"),
     )
-    penalty = _robustness_penalty(robustness_score)
-    final_score = weighted_metric_score * penalty
 
     return FactorScoreBreakdown(
         raw_metrics=raw,
@@ -127,16 +118,14 @@ def compute_factor_score(
         metric_weights=weights,
         weighted_metric_score=weighted_metric_score,
         robustness_score=robustness_score,
-        robustness_penalty=penalty,
-        final_score=final_score,
+        final_score=weighted_metric_score,
         evaluation_summary=evaluation_summary,
     )
 
 
 RankCandidate = tuple[
     FactorVariantRef,
-    PerformanceMetrics,
-    Decimal | None,
+    dict[str, Decimal | None],
     dict[str, object] | None,
 ]
 
@@ -148,15 +137,18 @@ def rank_factors_in_segment(
     qualifying_percentile: int = DEFAULT_QUALIFYING_PERCENTILE,
     min_qualifying_factors: int = DEFAULT_MIN_QUALIFYING_FACTORS,
     metric_weights: dict[str, Decimal] | None = None,
+    higher_is_better: dict[str, bool] | None = None,
 ) -> tuple[Decimal, list[RankedFactor]]:
-    peer_metrics = [metrics for _, metrics, _, _ in candidates]
+    weights = metric_weights or DEFAULT_ENTRY_METRIC_WEIGHTS
+    direction = higher_is_better or ENTRY_HIGHER_IS_BETTER
+    peer_metrics = [metrics for _, metrics, _ in candidates]
     breakdowns: list[tuple[FactorVariantRef, FactorScoreBreakdown]] = []
-    for factor, metrics, robustness, evaluation_summary in candidates:
+    for factor, metrics, evaluation_summary in candidates:
         breakdown = compute_factor_score(
             metrics,
-            robustness_score=robustness,
+            metric_weights=weights,
+            higher_is_better=direction,
             peer_metrics=peer_metrics,
-            metric_weights=metric_weights,
             evaluation_summary=evaluation_summary,
         )
         breakdowns.append((factor, breakdown))
@@ -200,13 +192,6 @@ def rank_factors_in_segment(
         )
     _assign_ranks(ranked)
     return threshold, ranked
-
-
-def _robustness_penalty(robustness_score: Decimal | None) -> Decimal:
-    if robustness_score is None:
-        return Decimal("1")
-    clamped = max(Decimal("0"), min(Decimal("1"), robustness_score))
-    return clamped
 
 
 def _percentile_threshold(scores: list[Decimal], percentile: int) -> Decimal:

@@ -1,5 +1,10 @@
-- [x] Task 23–31: Prior experiment work (see git history)
-- [x] Task 32: Unified experiment framework (schemas, presets, metrics, segments, ranking)
-- [x] Task 33: Entry/exit evaluation runners + trade simulator
-- [x] Task 34: Entry+Exit VectorBT runner + run_experiment.py
-- [x] Task 35: Tests, README, replace old experiment scripts
+- [ ] Task 1: Download and validate a broad research dataset (multi-year, ≥30 names)
+- [ ] Task 2: Enable `full` data preset and experiment configs for the new dataset
+- [ ] Task 3: Run end-to-end entry → exit → combined experiments on real data
+- [ ] Task 4: Complete pending entry/exit robustness dimensions (regime, perturbation, parameter)
+- [ ] Task 5: Implement combined strategy robustness scorer (replace pending stub)
+- [ ] Task 6: Wire combined benchmark metrics (alpha/beta) and meaningful `final_strategy_score`
+- [ ] Task 7: Persist unified experiment parquet artifacts per result schema
+- [ ] Task 8: Add IS/OOS/FULL trade-level summaries to entry and exit experiments
+- [ ] Task 9: Wire multi-factor combination into unified experiments (optional path)
+- [ ] Task 10: Expand real signal catalog beyond momentum + stop/trail demos

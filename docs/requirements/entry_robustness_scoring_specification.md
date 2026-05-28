@@ -1,4 +1,4 @@
-# v2_entry_robustness_scoring_specification.md
+# entry_robustness_scoring_specification.md
 
 ## Purpose
 
@@ -24,12 +24,12 @@ It does not define:
 
 ## References
 
-- v2_entry_signal_specification.md
-- v2_factor_scoring_specification.md
-- v2_factor_combination_specification.md
-- v2_information_coefficient_specification.md
-- v2_factor_performance_specification.md
-- v2_backtest_methodology_specification.md
+- entry_signal_specification.md
+- factor_scoring_specification.md
+- factor_combination_specification.md
+- information_coefficient_specification.md
+- factor_performance_specification.md
+- backtest_methodology_specification.md
 
 ---
 
@@ -177,7 +177,7 @@ Signals that work only in a narrow universe receive lower scores.
 
 # Sample Stability
 
-Evaluate consistency between in-sample and out-of-sample periods using the canonical split defined in `v2_backtest_methodology_specification.md` §30.
+Evaluate consistency between in-sample and out-of-sample periods using the canonical split defined in `backtest_methodology_specification.md` §30.
 
 Required periods:
 
@@ -224,17 +224,31 @@ Recommended default weights:
 
 | Component | Weight |
 |------------|---------|
-| IC Stability | 25% |
-| Return Stability | 20% |
-| Regime Stability | 15% |
-| Parameter Stability | 15% |
-| Rank Stability | 10% |
-| Breadth Stability | 10% |
-| Sample Stability | 5% |
+| IC Stability | 15% |
+| Return Stability | 10% |
+| Walk-Forward Stability | 20% |
+| Out-of-Sample Retention | 20% |
+| Market Regime Consistency | 15% |
+| Parameter Sensitivity | 10% |
+| Factor Decay Resistance | 5% |
+| Data Perturbation Resilience | 5% |
 
 Weights must be configurable.
 
 Total weight must equal 100%.
+
+---
+
+# Migration / Removed Dimensions
+
+The following dimensions were removed from the default entry robustness model:
+
+| Removed Component | Former Weight | Notes |
+|-------------------|---------------|-------|
+| Rank Stability | 10% | No slot in finalized model |
+| Breadth Stability | 10% | Universe breadth evaluation moved to combined-strategy robustness |
+
+`Sample Stability` is renamed to `Out-of-Sample Retention` with an increased default weight (5% → 20%). Implementations may expose the legacy field name as an alias during transition.
 
 ---
 
@@ -311,14 +325,18 @@ signal_id
 
 ic_stability_score
 return_stability_score
-regime_stability_score
-parameter_stability_score
-rank_stability_score
-breadth_stability_score
-sample_stability_score
+walk_forward_stability_score
+out_of_sample_retention_score
+market_regime_consistency_score
+parameter_sensitivity_score
+factor_decay_resistance_score
+data_perturbation_resilience_score
 
 overall_robustness_score
 robustness_classification
+pending_dimensions
 ```
+
+Legacy aliases (`regime_stability_score`, `parameter_stability_score`, `sample_stability_score`, `rank_stability_score`, `breadth_stability_score`) may appear in transitional payloads.
 
 These outputs shall be persisted for downstream research and signal comparison.
